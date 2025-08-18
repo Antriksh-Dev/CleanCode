@@ -38,6 +38,16 @@ protocol HTTPClient {
     func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
 }
 
+enum RemoteFeedLoaderError: Error {
+    case connectivity
+    case invalidData
+}
+
+enum RemoteFeedLoaderResult {
+    case success([Feed])
+    case failure(RemoteFeedLoaderError)
+}
+
 class RemoteFeedLoader {
     let url: URL
     let client: HTTPClient
