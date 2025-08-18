@@ -134,7 +134,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         var receivedResult: RemoteFeedLoaderResult? = nil
         
         sut.load { receivedResult = $0 }
-        client.complete(with: error)
+        client.completeWith(error: error)
         
         XCTAssertEqual(receivedResult, .failure(.connectivity))
     }
@@ -148,7 +148,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
             
             var receivedResult: RemoteFeedLoaderResult? = nil
             sut.load { receivedResult = $0 }
-            client.complete(with: code, data: validEmptyJSONData(), at: index)
+            client.completeWith(statusCode: code, data: validEmptyJSONData(), at: index)
             
             XCTAssertEqual(receivedResult, .failure(.invalidData))
         }
@@ -161,7 +161,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         var receivedResult: RemoteFeedLoaderResult? = nil
         sut.load { receivedResult = $0 }
         
-        client.complete(with: 200, data: invalidJSONData())
+        client.completeWith(statusCode: 200, data: invalidJSONData())
         
         XCTAssertEqual(receivedResult, .failure(.invalidData))
     }
@@ -172,7 +172,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         var receivedResult: RemoteFeedLoaderResult? = nil
         sut.load { receivedResult = $0 }
-        client.complete(with: 200, data: validEmptyJSONData())
+        client.completeWith(statusCode: 200, data: validEmptyJSONData())
         
         XCTAssertEqual(receivedResult, (.success([])))
     }
@@ -183,7 +183,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         var receivedResult: RemoteFeedLoaderResult? = nil
         sut.load { receivedResult = $0 }
-        client.complete(with: 200, data: validNonEmptyFeed().jsonData)
+        client.completeWith(statusCode: 200, data: validNonEmptyFeed().jsonData)
         
         XCTAssertEqual(receivedResult, .success(validNonEmptyFeed().models))
     }
@@ -267,11 +267,11 @@ final class RemoteFeedLoaderTests: XCTestCase {
             completions.append(completion)
         }
         
-        func complete(with error: Error, at index: Int = 0) {
+        func completeWith(error: Error, at index: Int = 0) {
             completions[index](.failure(error))
         }
         
-        func complete(with statusCode: Int, data: Data, at index: Int = 0) {
+        func completeWith(statusCode: Int, data: Data, at index: Int = 0) {
             let response = HTTPURLResponse(url: requestedURLs[index],
                                            statusCode: statusCode,
                                            httpVersion: nil,
