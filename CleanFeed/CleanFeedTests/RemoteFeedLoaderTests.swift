@@ -156,6 +156,17 @@ final class RemoteFeedLoaderTests: XCTestCase {
         XCTAssertEqual(receivedResult, .failure(.invalidData))
     }
     
+    func test_load_givesEmptyFeedFor200HTTPResponseWithEmptyValidData() {
+        let url = URL(string: "https://a-given-url.com")!
+        let (client, sut) = makeSUT(with: url)
+        
+        var receivedResult: RemoteFeedLoaderResult? = nil
+        sut.load { receivedResult = $0 }
+        client.complete(with: 200, data: validEmptyData())
+        
+        XCTAssertEqual(receivedResult, (.success([])))
+    }
+    
     // MARK: - Helpers
     
     private func makeSUT(with url: URL) -> (client: HTTPClientSpy, sut: RemoteFeedLoader) {
