@@ -138,7 +138,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
             
             var receivedResult: RemoteFeedLoaderResult? = nil
             sut.load { receivedResult = $0 }
-            client.complete(with: code, data: validEmptyData(), at: index)
+            client.complete(with: code, data: validEmptyJSONData(), at: index)
             
             XCTAssertEqual(receivedResult, .failure(.invalidData))
         }
@@ -151,7 +151,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         var receivedResult: RemoteFeedLoaderResult? = nil
         sut.load { receivedResult = $0 }
         
-        client.complete(with: 200, data: invalidData())
+        client.complete(with: 200, data: invalidJSONData())
         
         XCTAssertEqual(receivedResult, .failure(.invalidData))
     }
@@ -162,7 +162,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         var receivedResult: RemoteFeedLoaderResult? = nil
         sut.load { receivedResult = $0 }
-        client.complete(with: 200, data: validEmptyData())
+        client.complete(with: 200, data: validEmptyJSONData())
         
         XCTAssertEqual(receivedResult, (.success([])))
     }
@@ -187,11 +187,11 @@ final class RemoteFeedLoaderTests: XCTestCase {
         return (client, sut)
     }
     
-    func invalidData() -> Data {
+    func invalidJSONData() -> Data {
         "Invalid Data".data(using: .utf8)!
     }
     
-    func validEmptyData() -> Data {
+    func validEmptyJSONData() -> Data {
         let jsonString = "{ \"items\" : [] }"
         let data = jsonString.data(using: .utf8)!
         return data
