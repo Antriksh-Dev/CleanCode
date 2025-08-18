@@ -130,11 +130,9 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let url = URL(string: "https://a-given-url.com")!
         let (client, sut) = makeSUT(with: url)
         
-        let error = NSError()
         var receivedResult: RemoteFeedLoaderResult? = nil
-        
         sut.load { receivedResult = $0 }
-        client.completeWith(error: error)
+        client.completeWith(error: anyError())
         
         XCTAssertEqual(receivedResult, .failure(.connectivity))
     }
@@ -160,7 +158,6 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         var receivedResult: RemoteFeedLoaderResult? = nil
         sut.load { receivedResult = $0 }
-        
         client.completeWith(statusCode: 200, data: invalidJSONData())
         
         XCTAssertEqual(receivedResult, .failure(.invalidData))
@@ -195,6 +192,10 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let sut = RemoteFeedLoader(url: url, client: client)
         
         return (client, sut)
+    }
+    
+    func anyError() -> Error {
+        NSError()
     }
     
     func invalidJSONData() -> Data {
