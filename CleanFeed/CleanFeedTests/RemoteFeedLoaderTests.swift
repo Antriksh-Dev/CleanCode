@@ -82,7 +82,9 @@ class RemoteFeedLoader: FeedLoader {
     }
     
     func load(completion: @escaping (LoadFeedResult) -> Void) {
-        client.get(from: url) { result in
+        client.get(from: url) { [weak self] result in
+            guard let _ = self else { return }
+            
             switch result {
             case let .success(data, response):
                 guard response.statusCode == 200,
@@ -172,6 +174,21 @@ final class RemoteFeedLoaderTests: XCTestCase {
         expect(sut: sut, expectedResult: .success(validNonEmptyFeed().models)) {
             client.completeWith(statusCode: 200, data: validNonEmptyFeed().jsonData)
         }
+    }
+    
+    func test_load_doesNotGiveResultWhenLoaderIsDeinitialised() {
+        let url = URL(string: "https://a-given-url.com")!
+        let client = HTTPClientSpy()
+        var sut: RemoteFeedLoader? = RemoteFeedLoader(url: url, client: client)
+        
+        var receivedResult: LoadFeedResult? = nil
+        sut?.load { receivedResult = $0 }
+        
+        sut = nil
+        
+        client.completeWith(error: anyError())
+        
+        XCTAssertNil(receivedResult)
     }
     
     // MARK: - Helpers
