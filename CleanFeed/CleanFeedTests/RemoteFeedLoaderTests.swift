@@ -27,6 +27,12 @@
  */
 
 import XCTest
+import CleanFeed
+
+enum HTTPClientResult {
+    case success(Data, HTTPURLResponse)
+    case failure(Error)
+}
 
 protocol HTTPClient {
     func get(from url: URL)
