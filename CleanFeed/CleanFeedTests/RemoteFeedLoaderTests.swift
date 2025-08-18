@@ -107,12 +107,15 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let url = URL(string: "https://a-given-url.com")!
         let (client, sut) = makeSUT(with: url)
         
-        var receivedResult: RemoteFeedLoaderResult? = nil
-        
-        sut.load { receivedResult = $0 }
-        client.complete(with: 201, data: validData())
-        
-        XCTAssertEqual(receivedResult, .failure(.invalidData))
+        let samples = [199, 201, 300, 400, 500].enumerated()
+        for (index, code) in samples {
+            
+            var receivedResult: RemoteFeedLoaderResult? = nil
+            sut.load { receivedResult = $0 }
+            client.complete(with: code, data: validData(), at: index)
+            
+            XCTAssertEqual(receivedResult, .failure(.invalidData))
+        }
     }
     
     // MARK: - Helpers
