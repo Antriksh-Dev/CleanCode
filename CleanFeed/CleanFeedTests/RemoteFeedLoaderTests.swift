@@ -43,7 +43,7 @@ enum RemoteFeedLoaderError: Error {
     case invalidData
 }
 
-enum RemoteFeedLoaderResult {
+enum RemoteFeedLoaderResult: Equatable {
     case success([Feed])
     case failure(RemoteFeedLoaderError)
 }
@@ -58,8 +58,16 @@ class RemoteFeedLoader {
     }
     
     func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
-        client.get(from: url) { _ in
-            
+        client.get(from: url) { result in
+            switch result {
+            case let .success(_, response):
+                guard response.statusCode == 200 else {
+                    completion(.failure(.invalidData))
+                    return
+                }
+            case .failure(_):
+                completion(.failure(.connectivity))
+            }
         }
     }
 }
@@ -82,6 +90,19 @@ final class RemoteFeedLoaderTests: XCTestCase {
         XCTAssertEqual(client.requestedURLs, [url])
     }
 
+    func test_load_givesErrorForClientError() {
+        let url = URL(string: "https://a-given-url.com")!
+        let (client, sut) = makeSUT(with: url)
+        
+        let error = NSError()
+        var receivedResult: RemoteFeedLoaderResult? = nil
+        
+        sut.load { receivedResult = $0 }
+        client.complete(with: error)
+        
+        XCTAssertEqual(receivedResult, .failure(.connectivity))
+    }
+    
     // MARK: - Helpers
     
     private func makeSUT(with url: URL) -> (client: HTTPClientSpy, sut: RemoteFeedLoader) {
@@ -93,9 +114,15 @@ final class RemoteFeedLoaderTests: XCTestCase {
     
     private class HTTPClientSpy: HTTPClient {
         var requestedURLs = [URL]()
+        var completions = [(HTTPClientResult) -> Void]()
         
         func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void) {
             requestedURLs.append(url)
+            completions.append(completion)
+        }
+        
+        func complete(with error: Error, at index: Int = 0) {
+            completions[index](.failure(error))
         }
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Feed {
+public struct Feed: Equatable {
     private let id: UUID
     private let description: String?
     private let location: String?
