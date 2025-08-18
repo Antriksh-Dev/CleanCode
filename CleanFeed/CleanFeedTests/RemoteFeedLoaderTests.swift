@@ -57,7 +57,7 @@ class RemoteFeedLoader {
         self.client = client
     }
     
-    func load() {
+    func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
         client.get(from: url) { _ in
             
         }
@@ -79,7 +79,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let client = HTTPClientSpy()
         let sut = RemoteFeedLoader(url: url, client: client)
         
-        sut.load()
+        sut.load { _ in }
         
         XCTAssertEqual(client.requestedURLs, [url])
     }
