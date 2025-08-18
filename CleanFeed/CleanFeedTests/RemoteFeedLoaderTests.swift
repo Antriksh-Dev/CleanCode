@@ -115,6 +115,16 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         XCTAssertEqual(client.requestedURLs, [url])
     }
+    
+    func test_loadTwice_requestsDataFromURLTwice() {
+        let url = URL(string: "https://a-given-url.com")!
+        let (client, sut) = makeSUT(with: url)
+        
+        sut.load { _ in }
+        sut.load { _ in }
+        
+        XCTAssertEqual(client.requestedURLs, [url, url])
+    }
 
     func test_load_givesErrorForClientError() {
         let url = URL(string: "https://a-given-url.com")!
