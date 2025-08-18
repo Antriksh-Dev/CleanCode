@@ -167,6 +167,17 @@ final class RemoteFeedLoaderTests: XCTestCase {
         XCTAssertEqual(receivedResult, (.success([])))
     }
     
+    func test_load_givesValidFeedFor200HTTPResponseWithValidData() {
+        let url = URL(string: "https://a-given-url.com")!
+        let (client, sut) = makeSUT(with: url)
+        
+        var receivedResult: RemoteFeedLoaderResult? = nil
+        sut.load { receivedResult = $0 }
+        client.complete(with: 200, data: validNonEmptyFeed().jsonData)
+        
+        XCTAssertEqual(receivedResult, .success(validNonEmptyFeed().models))
+    }
+    
     // MARK: - Helpers
     
     private func makeSUT(with url: URL) -> (client: HTTPClientSpy, sut: RemoteFeedLoader) {
@@ -184,6 +195,57 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let jsonString = "{ \"items\" : [] }"
         let data = jsonString.data(using: .utf8)!
         return data
+    }
+    
+    func validNonEmptyFeed() -> (jsonData: Data, models: [Feed]) {
+        let feedItem1 = Feed(id: UUID(uuidString: "73A7F70C-75DA-4C2E-B5A3-EED40DC53AA6")!,
+                             description: "Description 1",
+                             location: "Location 1",
+                             imageURL: URL(string: "https://url-1.com")!)
+        let feedItem2 = Feed(id: UUID(uuidString: "BA298A85-6275-48D3-8315-9C8F7C1CD109")!,
+                             description: nil,
+                             location: "Location 2",
+                             imageURL: URL(string: "https://url-2.com")!)
+        let feedItem3 = Feed(id: UUID(uuidString: "5A0D45B3-8E26-4385-8C5D-213E160A5E3C")!,
+                             description: "Description 3",
+                             location: nil,
+                             imageURL: URL(string: "https://url-3.com")!)
+        let feedItem4 = Feed(id: UUID(uuidString: "FF0ECFE2-2879-403F-8DBE-A83B4010B340")!,
+                             description: nil,
+                             location: nil,
+                             imageURL: URL(string: "https://url-4.com")!)
+        
+        let jsonString = """
+            {
+                "items": [
+                    {
+                        "id": "73A7F70C-75DA-4C2E-B5A3-EED40DC53AA6",
+                        "description": "Description 1",
+                        "location": "Location 1",
+                        "image": "https://url-1.com",
+                    },
+                    {
+                        "id": "BA298A85-6275-48D3-8315-9C8F7C1CD109",
+                        "location": "Location 2",
+                        "image": "https://url-2.com",
+                    },
+                    {
+                        "id": "5A0D45B3-8E26-4385-8C5D-213E160A5E3C",
+                        "description": "Description 3",
+                        "image": "https://url-3.com",
+                    },
+                    {
+                        "id": "FF0ECFE2-2879-403F-8DBE-A83B4010B340",
+                        "image": "https://url-4.com",
+                    },
+                ]
+            }
+            """
+        
+        let jsonData = jsonString.data(using: .utf8)!
+        let models = [feedItem1, feedItem2, feedItem3, feedItem4]
+        
+        return (jsonData, models)
     }
     
     private class HTTPClientSpy: HTTPClient {
