@@ -48,6 +48,30 @@ enum RemoteFeedLoaderResult: Equatable {
     case failure(RemoteFeedLoaderError)
 }
 
+struct RemoteFeed: Codable {
+    let items: [RemoteFeedItem]
+    
+    init(items: [RemoteFeedItem]) {
+        self.items = items
+    }
+    
+    func feed() -> [Feed] {
+        items.map { remoteFeed in
+            Feed(id: remoteFeed.id,
+                 description: remoteFeed.description,
+                 location: remoteFeed.location,
+                 imageURL: remoteFeed.image)
+        }
+    }
+    
+    struct RemoteFeedItem: Codable {
+        let id: UUID
+        let description: String?
+        let location: String?
+        let image: URL
+    }
+}
+
 class RemoteFeedLoader {
     let url: URL
     let client: HTTPClient
@@ -60,11 +84,13 @@ class RemoteFeedLoader {
     func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
         client.get(from: url) { result in
             switch result {
-            case let .success(_, response):
-                guard response.statusCode == 200 else {
+            case let .success(data, response):
+                guard response.statusCode == 200,
+                      let remoteFeed = try? JSONDecoder().decode(RemoteFeed.self, from: data) else {
                     completion(.failure(.invalidData))
                     return
                 }
+                completion(.success(remoteFeed.feed()))
             case .failure(_):
                 completion(.failure(.connectivity))
             }
@@ -112,10 +138,22 @@ final class RemoteFeedLoaderTests: XCTestCase {
             
             var receivedResult: RemoteFeedLoaderResult? = nil
             sut.load { receivedResult = $0 }
-            client.complete(with: code, data: validData(), at: index)
+            client.complete(with: code, data: validEmptyData(), at: index)
             
             XCTAssertEqual(receivedResult, .failure(.invalidData))
         }
+    }
+    
+    func test_load_givesErrorFor200HTTPResponseWithInvalidData() {
+        let url = URL(string: "https://a-given-url.com")!
+        let (client, sut) = makeSUT(with: url)
+        
+        var receivedResult: RemoteFeedLoaderResult? = nil
+        sut.load { receivedResult = $0 }
+        
+        client.complete(with: 200, data: invalidData())
+        
+        XCTAssertEqual(receivedResult, .failure(.invalidData))
     }
     
     // MARK: - Helpers
@@ -127,7 +165,11 @@ final class RemoteFeedLoaderTests: XCTestCase {
         return (client, sut)
     }
     
-    func validData() -> Data {
+    func invalidData() -> Data {
+        "Invalid Data".data(using: .utf8)!
+    }
+    
+    func validEmptyData() -> Data {
         let jsonString = "{ \"items\" : [] }"
         let data = jsonString.data(using: .utf8)!
         return data
