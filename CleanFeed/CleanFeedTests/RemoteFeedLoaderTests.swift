@@ -35,7 +35,7 @@ enum HTTPClientResult {
 }
 
 protocol HTTPClient {
-    func get(from url: URL)
+    func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
 }
 
 class RemoteFeedLoader {
@@ -48,7 +48,9 @@ class RemoteFeedLoader {
     }
     
     func load() {
-        client.get(from: url)
+        client.get(from: url) { _ in
+            
+        }
     }
 }
 
@@ -77,7 +79,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     private class HTTPClientSpy: HTTPClient {
         var requestedURLs = [URL]()
         
-        func get(from url: URL) {
+        func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void) {
             requestedURLs.append(url)
         }
     }
