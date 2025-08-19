@@ -132,7 +132,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let url = URL(string: "https://a-given-url.com")!
         let (client, sut) = makeSUT(with: url)
         
-        expect(sut: sut, expectedResult: .failure(RemoteFeedLoaderError.connectivity)) {
+        expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.connectivity)) {
             client.completeWith(error: anyError())
         }
     }
@@ -143,7 +143,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         let samples = [199, 201, 300, 400, 500].enumerated()
         for (index, code) in samples {
-            expect(sut: sut, expectedResult: .failure(RemoteFeedLoaderError.invalidData)) {
+            expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.invalidData)) {
                 client.completeWith(statusCode: code, data: validEmptyJSONData(), at: index)
             }
         }
@@ -153,7 +153,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let url = URL(string: "https://a-given-url.com")!
         let (client, sut) = makeSUT(with: url)
         
-        expect(sut: sut, expectedResult: .failure(RemoteFeedLoaderError.invalidData)) {
+        expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.invalidData)) {
             client.completeWith(statusCode: 200, data: invalidJSONData())
         }
     }
@@ -162,7 +162,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let url = URL(string: "https://a-given-url.com")!
         let (client, sut) = makeSUT(with: url)
         
-        expect(sut: sut, expectedResult: .success([])) {
+        expect(sut: sut, completeWith: .success([])) {
             client.completeWith(statusCode: 200, data: validEmptyJSONData())
         }
     }
@@ -171,7 +171,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let url = URL(string: "https://a-given-url.com")!
         let (client, sut) = makeSUT(with: url)
         
-        expect(sut: sut, expectedResult: .success(validNonEmptyFeed().models)) {
+        expect(sut: sut, completeWith: .success(validNonEmptyFeed().models)) {
             client.completeWith(statusCode: 200, data: validNonEmptyFeed().jsonData)
         }
     }
@@ -265,7 +265,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         return (jsonData, models)
     }
     
-    func expect(sut: RemoteFeedLoader, expectedResult: LoadFeedResult, when completion: () -> Void, file: StaticString = #file, line: UInt = #line) {
+    func expect(sut: RemoteFeedLoader, completeWith expectedResult: LoadFeedResult, when completion: () -> Void, file: StaticString = #file, line: UInt = #line) {
         
         var receivedResult: LoadFeedResult? = nil
         sut.load { receivedResult = $0 }
