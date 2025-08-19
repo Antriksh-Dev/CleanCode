@@ -49,13 +49,13 @@ enum RemoteFeedLoaderResult: Equatable {
 }
 
 struct RemoteFeedRoot: Codable {
-    let root: [RemoteFeedItem]
+    let root: [RemoteFeed]
     
     enum CodingKeys: String, CodingKey {
         case root = "items"
     }
     
-    init(root: [RemoteFeedItem]) {
+    init(root: [RemoteFeed]) {
         self.root = root
     }
     
@@ -64,15 +64,22 @@ struct RemoteFeedRoot: Codable {
             Feed(id: remoteFeed.id,
                  description: remoteFeed.description,
                  location: remoteFeed.location,
-                 imageURL: remoteFeed.image)
+                 imageURL: remoteFeed.imageURL)
         }
     }
     
-    struct RemoteFeedItem: Codable {
+    struct RemoteFeed: Codable {
         let id: UUID
         let description: String?
         let location: String?
-        let image: URL
+        let imageURL: URL
+        
+        enum CodingKeys: String, CodingKey {
+            case id
+            case description
+            case location
+            case imageURL = "image"
+        }
     }
 }
 
