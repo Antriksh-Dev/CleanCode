@@ -49,18 +49,14 @@ enum RemoteFeedLoaderResult: Equatable {
 }
 
 struct RemoteFeedRoot: Codable {
-    let root: [RemoteFeed]
+    let items: [RemoteFeed]
     
-    enum CodingKeys: String, CodingKey {
-        case root = "items"
-    }
-    
-    init(root: [RemoteFeed]) {
-        self.root = root
+    init(items: [RemoteFeed]) {
+        self.items = items
     }
     
     func feed() -> [Feed] {
-        root.map { remoteFeed in
+        items.map { remoteFeed in
             Feed(id: remoteFeed.id,
                  description: remoteFeed.description,
                  location: remoteFeed.location,
@@ -87,7 +83,7 @@ class RemoteFeedMapper {
     static let OK_200 = 200
     
     static func map(data: Data, response: HTTPURLResponse) -> LoadFeedResult {
-        guard response.statusCode == 200,
+        guard response.statusCode == OK_200,
               let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
             return .failure(RemoteFeedLoaderError.invalidData)
         }
