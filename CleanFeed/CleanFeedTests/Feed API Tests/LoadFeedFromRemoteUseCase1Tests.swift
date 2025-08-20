@@ -168,6 +168,13 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
 
     // MARK: - Helpers
     
+    private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (client: HTTPClientSpy, sut: RemoteFeedLoader) {
+        let client = HTTPClientSpy()
+        let sut = RemoteFeedLoader(url: url, client: client)
+        
+        return (client, sut)
+    }
+    
     private class HTTPClientSpy: HTTPClient {
         var requestedURLs = [URL]()
         
