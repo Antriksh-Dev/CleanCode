@@ -185,6 +185,13 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
             client.complete(withStatusCode: 200, data: invalidJSONData())
         }
     }
+    
+    func test_load_deliversEmptyFeedFor200HTTPResponseAndValidEmptyJSONData() {
+        let (client, sut) = makeSUT()
+        expect(sut, toCompleteWithResult: LoadFeedResult.success([])) {
+            client.complete(withStatusCode: 200, data: validEmptyJSONData())
+        }
+    }
 
     // MARK: - Helpers
     
