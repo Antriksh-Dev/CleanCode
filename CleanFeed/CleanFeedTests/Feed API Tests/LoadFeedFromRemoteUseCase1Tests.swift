@@ -178,6 +178,13 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
             }
         }
     }
+    
+    func test_load_deliversErrorFor200HTTPResponseAndInvalidJSONData() {
+        let (client, sut) = makeSUT()
+        expect(sut, toCompleteWithResult: LoadFeedResult.failure(RemoteFeedLoader.Error.invalidData)) {
+            client.complete(withStatusCode: 200, data: invalidJSONData())
+        }
+    }
 
     // MARK: - Helpers
     
@@ -201,6 +208,10 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
     
     private func anyError() -> Error {
         NSError(domain: "can't reach server", code: 0, userInfo: nil)
+    }
+    
+    private func invalidJSONData() -> Data {
+        "invalid json data".data(using: .utf8)!
     }
     
     private func validEmptyJSONData() -> Data {
