@@ -42,6 +42,11 @@ fileprivate struct Feed {
     }
 }
 
+fileprivate enum LoadFeedResult {
+    case success([Feed])
+    case failure(Error)
+}
+
 final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
 
     override func setUpWithError() throws {
