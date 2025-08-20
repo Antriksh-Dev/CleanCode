@@ -18,8 +18,8 @@
  4. System creates 'Feed' models using the validated data.
  5. System delivers Feed of the user.
  
- Invalid path - error course (sad path):
- 1. System delivers invalid data path.
+ Invalid data - error course (sad path):
+ 1. System delivers invalid data error.
  
  No connectivity - error course (sad path):
  1. System delivers connectivity error.
