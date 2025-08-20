@@ -164,53 +164,19 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
     
     func test_load_deliversErrorForClientError() {
         let (client, sut) = makeSUT()
-        let expectedResult = LoadFeedResult.failure(RemoteFeedLoader.Error.connectivity)
-        
-        let expectation = expectation(description: "wait load to complete")
-        sut.load { receivedResult in
-            switch (receivedResult, expectedResult) {
-            case let (.success(receivedFeed), .success(expectedFeed)):
-                XCTAssertEqual(receivedFeed, expectedFeed)
-            case let (.failure(receivedError as RemoteFeedLoader.Error) , .failure(expectedError as RemoteFeedLoader.Error)):
-                XCTAssertEqual(receivedError, expectedError)
-            default:
-                XCTFail("Expected result \(expectedResult) but received \(receivedResult)")
-            }
-            
-            expectation.fulfill()
+        expect(sut, toCompleteWithResult: .failure(RemoteFeedLoader.Error.connectivity)) {
+            client.complete(withError: anyError())
         }
-        
-        client.complete(withError: anyError())
-        
-        wait(for: [expectation], timeout: 1.0)
     }
     
     func test_load_deliversErrorForNon200HTTPResponseAndValidJSONData() {
         let (client, sut) = makeSUT()
-        let expectedResult = LoadFeedResult.failure(RemoteFeedLoader.Error.invalidData)
-        
         let samples = [199, 201, 300, 400, 500].enumerated()
         samples.forEach { index, code in
-            let expectation = expectation(description: "wait load to complete")
-            
-            sut.load { receivedResult in
-                switch (receivedResult, expectedResult) {
-                case let (.success(receivedFeed), .success(expectedFeed)):
-                    XCTAssertEqual(receivedFeed, expectedFeed)
-                case let (.failure(receivedError as RemoteFeedLoader.Error) , .failure(expectedError as RemoteFeedLoader.Error)):
-                    XCTAssertEqual(receivedError, expectedError)
-                default:
-                    XCTFail("Expected result \(expectedResult) but received \(receivedResult)")
-                }
-                
-                expectation.fulfill()
+            expect(sut, toCompleteWithResult: LoadFeedResult.failure(RemoteFeedLoader.Error.invalidData)) {
+                client.complete(withStatusCode: code, data: validEmptyJSONData(), at: index)
             }
-            
-            client.complete(withStatusCode: code, data: validEmptyJSONData(), at: index)
-            
-            wait(for: [expectation], timeout: 1.0)
         }
-        
     }
 
     // MARK: - Helpers
@@ -240,6 +206,30 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
     private func validEmptyJSONData() -> Data {
         let jsonString = "{ \"items\" : [] }"
         return jsonString.data(using: .utf8)!
+    }
+    
+    private func expect(_ sut: RemoteFeedLoader,
+                        toCompleteWithResult expectedResult: LoadFeedResult,
+                        for action: () -> Void,
+                        file: StaticString = #file,
+                        line: UInt = #line) {
+        let expectation = expectation(description: "wait load to complete")
+        sut.load { receivedResult in
+            switch (receivedResult, expectedResult) {
+            case let (.success(receivedFeed), .success(expectedFeed)):
+                XCTAssertEqual(receivedFeed, expectedFeed, file: file, line: line)
+            case let (.failure(receivedError as RemoteFeedLoader.Error) , .failure(expectedError as RemoteFeedLoader.Error)):
+                XCTAssertEqual(receivedError, expectedError, file: file, line: line)
+            default:
+                XCTFail("Expected result \(expectedResult) but received \(receivedResult)", file: file, line: line)
+            }
+            
+            expectation.fulfill()
+        }
+        
+        action()
+        
+        wait(for: [expectation], timeout: 1.0)
     }
     
     private class HTTPClientSpy: HTTPClient {
