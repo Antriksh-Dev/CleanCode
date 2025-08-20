@@ -184,6 +184,29 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
         
         wait(for: [expectation], timeout: 1.0)
     }
+    
+    func test_load_deliversErrorForNon200HTTPResponseAndValidJSONData() {
+        let (client, sut) = makeSUT()
+        let expectedResult = LoadFeedResult.failure(RemoteFeedLoader.Error.invalidData)
+        
+        let expectation = expectation(description: "wait load to complete")
+        sut.load { receivedResult in
+            switch (receivedResult, expectedResult) {
+            case let (.success(receivedFeed), .success(expectedFeed)):
+                XCTAssertEqual(receivedFeed, expectedFeed)
+            case let (.failure(receivedError as RemoteFeedLoader.Error) , .failure(expectedError as RemoteFeedLoader.Error)):
+                XCTAssertEqual(receivedError, expectedError)
+            default:
+                XCTFail("Expected result \(expectedResult) but received \(receivedResult)")
+            }
+            
+            expectation.fulfill()
+        }
+        
+        client.complete(withStatusCode: 201, data: validEmptyJSONData())
+        
+        wait(for: [expectation], timeout: 1.0)
+    }
 
     // MARK: - Helpers
     
@@ -209,6 +232,11 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
         NSError(domain: "can't reach server", code: 0, userInfo: nil)
     }
     
+    private func validEmptyJSONData() -> Data {
+        let jsonString = "{ \"items\" : [] }"
+        return jsonString.data(using: .utf8)!
+    }
+    
     private class HTTPClientSpy: HTTPClient {
         var messages = [(url: URL, completion: (HTTPClientResult) -> Void)]()
         var requestedURLs: [URL] {
@@ -221,6 +249,14 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
         
         func complete(withError error: Error, at index: Int = 0) {
             messages[index].completion(.failure(error))
+        }
+        
+        func complete(withStatusCode code: Int, data: Data, at index: Int = 0) {
+            let response = HTTPURLResponse(url: requestedURLs[index],
+                                           statusCode: code,
+                                           httpVersion: nil,
+                                           headerFields: nil)!
+            messages[index].completion(.success(data, response))
         }
     }
 }
