@@ -189,23 +189,28 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
         let (client, sut) = makeSUT()
         let expectedResult = LoadFeedResult.failure(RemoteFeedLoader.Error.invalidData)
         
-        let expectation = expectation(description: "wait load to complete")
-        sut.load { receivedResult in
-            switch (receivedResult, expectedResult) {
-            case let (.success(receivedFeed), .success(expectedFeed)):
-                XCTAssertEqual(receivedFeed, expectedFeed)
-            case let (.failure(receivedError as RemoteFeedLoader.Error) , .failure(expectedError as RemoteFeedLoader.Error)):
-                XCTAssertEqual(receivedError, expectedError)
-            default:
-                XCTFail("Expected result \(expectedResult) but received \(receivedResult)")
+        let samples = [199, 201, 300, 400, 500].enumerated()
+        samples.forEach { index, code in
+            let expectation = expectation(description: "wait load to complete")
+            
+            sut.load { receivedResult in
+                switch (receivedResult, expectedResult) {
+                case let (.success(receivedFeed), .success(expectedFeed)):
+                    XCTAssertEqual(receivedFeed, expectedFeed)
+                case let (.failure(receivedError as RemoteFeedLoader.Error) , .failure(expectedError as RemoteFeedLoader.Error)):
+                    XCTAssertEqual(receivedError, expectedError)
+                default:
+                    XCTFail("Expected result \(expectedResult) but received \(receivedResult)")
+                }
+                
+                expectation.fulfill()
             }
             
-            expectation.fulfill()
+            client.complete(withStatusCode: code, data: validEmptyJSONData(), at: index)
+            
+            wait(for: [expectation], timeout: 1.0)
         }
         
-        client.complete(withStatusCode: 201, data: validEmptyJSONData())
-        
-        wait(for: [expectation], timeout: 1.0)
     }
 
     // MARK: - Helpers
