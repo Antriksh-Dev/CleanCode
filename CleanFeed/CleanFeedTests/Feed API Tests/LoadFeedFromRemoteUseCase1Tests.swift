@@ -56,6 +56,10 @@ fileprivate enum HTTPClientResult {
     case failure(Error)
 }
 
+fileprivate protocol HTTPClient {
+    func get(from: URL, completion: @escaping (HTTPClientResult) -> Void)
+}
+
 final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
 
     override func setUpWithError() throws {
