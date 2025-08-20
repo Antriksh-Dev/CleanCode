@@ -61,10 +61,10 @@ fileprivate protocol HTTPClient {
 }
 
 fileprivate class RemoteFeed: Codable {
-    private let id: UUID
-    private let description: String?
-    private let location: String?
-    private let imageURL: URL
+    let id: UUID
+    let description: String?
+    let location: String?
+    let imageURL: URL
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -78,6 +78,19 @@ fileprivate class RemoteFeed: Codable {
         self.description = description
         self.location = location
         self.imageURL = imageURL
+    }
+}
+
+fileprivate class RemoteFeedRoot: Codable {
+    private let items: [RemoteFeed]
+    
+    var feed: [Feed] {
+        items.map { remoteFeed in
+            Feed(id: remoteFeed.id,
+                 description: remoteFeed.description,
+                 location: remoteFeed.location,
+                 imageURL: remoteFeed.imageURL)
+        }
     }
 }
 
