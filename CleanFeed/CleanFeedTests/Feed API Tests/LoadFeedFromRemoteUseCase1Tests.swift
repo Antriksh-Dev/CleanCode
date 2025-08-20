@@ -107,6 +107,34 @@ fileprivate class RemoteFeedMapper {
     }
 }
 
+fileprivate class RemoteFeedLoader: FeedLoader {
+    let url: URL
+    let client: HTTPClient
+    
+    enum Error: Swift.Error {
+        case connectivity
+        case invalidData
+    }
+    
+    init(url: URL, client: HTTPClient) {
+        self.url = url
+        self.client = client
+    }
+    
+    func load(completion: @escaping (LoadFeedResult) -> Void) {
+        client.get(from: url) { [weak self] result in
+            guard let _ = self else { return }
+            
+            switch result {
+            case let .success(data, response):
+                completion(RemoteFeedMapper.map(data: data, response: response))
+            case .failure:
+                completion(.failure(Error.connectivity))
+            }
+        }
+    }
+}
+
 final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
 
     override func setUpWithError() throws {
