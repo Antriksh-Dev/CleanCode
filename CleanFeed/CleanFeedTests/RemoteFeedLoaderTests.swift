@@ -138,7 +138,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         XCTAssertEqual(client.requestedURLs, [url, url])
     }
 
-    func test_load_givesErrorForClientError() {
+    func test_load_deliversErrorForClientError() {
         let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.connectivity)) {
@@ -146,7 +146,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         }
     }
     
-    func test_load_givesErrorForNon200HTTPResponseWithValidData() {
+    func test_load_deliversErrorForNon200HTTPResponseWithValidJSONData() {
         let (client, sut) = makeSUT()
         
         let samples = [199, 201, 300, 400, 500].enumerated()
@@ -157,7 +157,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         }
     }
     
-    func test_load_givesErrorFor200HTTPResponseWithInvalidData() {
+    func test_load_deliversErrorFor200HTTPResponseWithInvalidJSONData() {
         let url = URL(string: "https://a-given-url.com")!
         let (client, sut) = makeSUT(with: url)
         
@@ -166,7 +166,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         }
     }
     
-    func test_load_givesEmptyFeedFor200HTTPResponseWithEmptyValidData() {
+    func test_load_deliversEmptyFeedFor200HTTPResponseWithValidEmptyJSONData() {
         let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .success([])) {
@@ -174,7 +174,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         }
     }
     
-    func test_load_givesValidFeedFor200HTTPResponseWithValidData() {
+    func test_load_deliversValidFeedFor200HTTPResponseWithValidJSONData() {
         let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .success(validNonEmptyFeed().models)) {
@@ -182,7 +182,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         }
     }
     
-    func test_load_doesNotGiveResultWhenLoaderIsDeinitialised() {
+    func test_load_doesNotDeliverResultWhenRemoteFeedLoaderIsDeallocated() {
         let url = URL(string: "https://a-given-url.com")!
         let client = HTTPClientSpy()
         var sut: RemoteFeedLoader? = RemoteFeedLoader(url: url, client: client)
