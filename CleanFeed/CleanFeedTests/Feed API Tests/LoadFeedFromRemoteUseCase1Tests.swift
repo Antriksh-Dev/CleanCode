@@ -28,7 +28,7 @@
 
 import XCTest
 
-fileprivate struct Feed {
+fileprivate struct Feed: Equatable {
     private let id: UUID
     private let description: String?
     private let location: String?
@@ -161,6 +161,29 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
         
         XCTAssertEqual(client.requestedURLs, [url, url])
     }
+    
+    func test_load_deliversErrorForClientError() {
+        let (client, sut) = makeSUT()
+        let expectedResult = LoadFeedResult.failure(RemoteFeedLoader.Error.connectivity)
+        
+        let expectation = expectation(description: "wait load to complete")
+        sut.load { receivedResult in
+            switch (receivedResult, expectedResult) {
+            case let (.success(receivedFeed), .success(expectedFeed)):
+                XCTAssertEqual(receivedFeed, expectedFeed)
+            case let (.failure(receivedError as RemoteFeedLoader.Error) , .failure(expectedError as RemoteFeedLoader.Error)):
+                XCTAssertEqual(receivedError, expectedError)
+            default:
+                XCTFail("Expected result \(expectedResult) but received \(receivedResult)")
+            }
+            
+            expectation.fulfill()
+        }
+        
+        client.complete(withError: anyError())
+        
+        wait(for: [expectation], timeout: 1.0)
+    }
 
     // MARK: - Helpers
     
@@ -180,6 +203,10 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
         addTeardownBlock { [weak instance] in
             XCTAssertNil(instance, "Instance should have been deallocated. Potential memory leak.", file: file, line: line)
         }
+    }
+    
+    private func anyError() -> Error {
+        NSError(domain: "can't reach server", code: 0, userInfo: nil)
     }
     
     private class HTTPClientSpy: HTTPClient {
