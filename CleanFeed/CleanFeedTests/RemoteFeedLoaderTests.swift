@@ -114,8 +114,7 @@ class RemoteFeedLoader: FeedLoader {
 final class RemoteFeedLoaderTests: XCTestCase {
 
     func test_init_doesNotRequestDataFromURL() {
-        let url = URL(string: "https://a-given-url.com")!
-        let (client, _) = makeSUT(with: url)
+        let (client, _) = makeSUT()
         
         XCTAssertTrue(client.requestedURLs.isEmpty)
     }
@@ -140,8 +139,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     }
 
     func test_load_givesErrorForClientError() {
-        let url = URL(string: "https://a-given-url.com")!
-        let (client, sut) = makeSUT(with: url)
+        let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.connectivity)) {
             client.completeWith(error: anyError())
@@ -149,8 +147,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     }
     
     func test_load_givesErrorForNon200HTTPResponseWithValidData() {
-        let url = URL(string: "https://a-given-url.com")!
-        let (client, sut) = makeSUT(with: url)
+        let (client, sut) = makeSUT()
         
         let samples = [199, 201, 300, 400, 500].enumerated()
         for (index, code) in samples {
@@ -170,8 +167,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     }
     
     func test_load_givesEmptyFeedFor200HTTPResponseWithEmptyValidData() {
-        let url = URL(string: "https://a-given-url.com")!
-        let (client, sut) = makeSUT(with: url)
+        let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .success([])) {
             client.completeWith(statusCode: 200, data: validEmptyJSONData())
@@ -179,8 +175,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     }
     
     func test_load_givesValidFeedFor200HTTPResponseWithValidData() {
-        let url = URL(string: "https://a-given-url.com")!
-        let (client, sut) = makeSUT(with: url)
+        let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .success(validNonEmptyFeed().models)) {
             client.completeWith(statusCode: 200, data: validNonEmptyFeed().jsonData)
@@ -204,7 +199,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     
     // MARK: - Helpers
     
-    private func makeSUT(with url: URL) -> (client: HTTPClientSpy, sut: RemoteFeedLoader) {
+    private func makeSUT(with url: URL = URL(string: "https://a-url.com")!) -> (client: HTTPClientSpy, sut: RemoteFeedLoader) {
         let client = HTTPClientSpy()
         let sut = RemoteFeedLoader(url: url, client: client)
         
