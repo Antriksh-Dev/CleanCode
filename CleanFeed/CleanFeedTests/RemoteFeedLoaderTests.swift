@@ -142,7 +142,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.connectivity)) {
-            client.completeWith(error: anyError())
+            client.complete(withError: anyError())
         }
     }
     
@@ -192,7 +192,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         sut = nil
         
-        client.completeWith(error: anyError())
+        client.complete(withError: anyError())
         
         XCTAssertNil(receivedResult)
     }
@@ -296,7 +296,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
             completions.append(completion)
         }
         
-        func completeWith(error: Error, at index: Int = 0) {
+        func complete(withError error: Error, at index: Int = 0) {
             completions[index](.failure(error))
         }
         
