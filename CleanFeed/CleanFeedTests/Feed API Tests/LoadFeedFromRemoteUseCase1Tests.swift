@@ -192,7 +192,14 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
             client.complete(withStatusCode: 200, data: validEmptyJSONData())
         }
     }
-
+    
+    func test_load_deliversValidFeedFor200HTTPResponseAndValidJSONData() {
+        let (client, sut) = makeSUT()
+        expect(sut, toCompleteWithResult: LoadFeedResult.success(validFeed().models)) {
+            client.complete(withStatusCode: 200, data: validFeed().jsonData)
+        }
+    }
+    
     // MARK: - Helpers
     
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!,
@@ -224,6 +231,57 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
     private func validEmptyJSONData() -> Data {
         let jsonString = "{ \"items\" : [] }"
         return jsonString.data(using: .utf8)!
+    }
+    
+    private func validFeed() -> (jsonData: Data, models: [Feed]) {
+        let jsonString = """
+        {
+            "items" : [
+                {
+                    "id": "73A7F70C-75DA-4C2E-B5A3-EED40DC53AA6",
+                    "description": "Description 1",
+                    "location": "Location 1",
+                    "image": "https://url-1.com",
+                },
+                {
+                    "id": "BA298A85-6275-48D3-8315-9C8F7C1CD109",
+                    "location": "Location 2",
+                    "image": "https://url-2.com",
+                },
+                {
+                    "id": "5A0D45B3-8E26-4385-8C5D-213E160A5E3C",
+                    "description": "Description 3",
+                    "image": "https://url-3.com",
+                },
+                {
+                    "id": "FF0ECFE2-2879-403F-8DBE-A83B4010B340",
+                    "image": "https://url-4.com",
+                },
+            ]
+        }
+        """
+        
+        let feed1 = Feed(id: UUID(uuidString: "73A7F70C-75DA-4C2E-B5A3-EED40DC53AA6")!,
+                         description: "Description 1",
+                         location: "Location 1",
+                         imageURL: URL(string: "https://url-1.com")!)
+        let feed2 = Feed(id: UUID(uuidString: "BA298A85-6275-48D3-8315-9C8F7C1CD109")!,
+                         description: nil,
+                         location: "Location 2",
+                         imageURL: URL(string: "https://url-2.com")!)
+        let feed3 = Feed(id: UUID(uuidString: "5A0D45B3-8E26-4385-8C5D-213E160A5E3C")!,
+                         description: "Description 3",
+                         location: nil,
+                         imageURL: URL(string: "https://url-3.com")!)
+        let feed4 = Feed(id: UUID(uuidString: "FF0ECFE2-2879-403F-8DBE-A83B4010B340")!,
+                         description: nil,
+                         location: nil,
+                         imageURL: URL(string: "https://url-4.com")!)
+        
+        let jsonData = jsonString.data(using: .utf8)!
+        let models = [feed1, feed2, feed3, feed4]
+        
+        return (jsonData, models)
     }
     
     private func expect(_ sut: RemoteFeedLoader,
