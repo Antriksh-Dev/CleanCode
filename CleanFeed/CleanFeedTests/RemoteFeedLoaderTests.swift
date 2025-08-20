@@ -29,92 +29,6 @@
 import XCTest
 import CleanFeed
 
-enum HTTPClientResult {
-    case success(Data, HTTPURLResponse)
-    case failure(Error)
-}
-
-protocol HTTPClient {
-    func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
-}
-
-enum RemoteFeedLoaderError: Error {
-    case connectivity
-    case invalidData
-}
-
-enum RemoteFeedLoaderResult: Equatable {
-    case success([Feed])
-    case failure(RemoteFeedLoaderError)
-}
-
-struct RemoteFeedRoot: Codable {
-    let items: [RemoteFeed]
-    
-    init(items: [RemoteFeed]) {
-        self.items = items
-    }
-    
-    func feed() -> [Feed] {
-        items.map { remoteFeed in
-            Feed(id: remoteFeed.id,
-                 description: remoteFeed.description,
-                 location: remoteFeed.location,
-                 imageURL: remoteFeed.imageURL)
-        }
-    }
-    
-    struct RemoteFeed: Codable {
-        let id: UUID
-        let description: String?
-        let location: String?
-        let imageURL: URL
-        
-        enum CodingKeys: String, CodingKey {
-            case id
-            case description
-            case location
-            case imageURL = "image"
-        }
-    }
-}
-
-class RemoteFeedMapper {
-    static let OK_200 = 200
-    
-    static func map(data: Data, response: HTTPURLResponse) -> LoadFeedResult {
-        guard response.statusCode == OK_200,
-              let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
-            return .failure(RemoteFeedLoaderError.invalidData)
-        }
-        
-        return .success(remoteFeedRoot.feed())
-    }
-}
-
-class RemoteFeedLoader: FeedLoader {
-    let url: URL
-    let client: HTTPClient
-    
-    init(url: URL, client: HTTPClient) {
-        self.url = url
-        self.client = client
-    }
-    
-    func load(completion: @escaping (LoadFeedResult) -> Void) {
-        client.get(from: url) { [weak self] result in
-            guard let _ = self else { return }
-            
-            switch result {
-            case let .success(data, response):
-                completion(RemoteFeedMapper.map(data: data, response: response))
-            case .failure(_):
-                completion(.failure(RemoteFeedLoaderError.connectivity))
-            }
-        }
-    }
-}
-
 final class RemoteFeedLoaderTests: XCTestCase {
 
     func test_init_doesNotRequestDataFromURL() {
@@ -145,7 +59,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     func test_load_deliversErrorForClientError() {
         let (client, sut) = makeSUT()
         
-        expect(sut, toCompleteWithResult: .failure(RemoteFeedLoaderError.connectivity)) {
+        expect(sut, toCompleteWithResult: .failure(RemoteFeedLoader.Error.connectivity)) {
             client.complete(withError: anyError())
         }
     }
@@ -155,7 +69,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         
         let samples = [199, 201, 300, 400, 500].enumerated()
         samples.forEach { index, code in
-            expect(sut, toCompleteWithResult: .failure(RemoteFeedLoaderError.invalidData)) {
+            expect(sut, toCompleteWithResult: .failure(RemoteFeedLoader.Error.invalidData)) {
                 client.complete(withStatusCode: code, data: validEmptyJSONData(), at: index)
             }
         }
@@ -164,7 +78,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     func test_load_deliversErrorFor200HTTPResponseWithInvalidJSONData() {
         let (client, sut) = makeSUT()
         
-        expect(sut, toCompleteWithResult: .failure(RemoteFeedLoaderError.invalidData)) {
+        expect(sut, toCompleteWithResult: .failure(RemoteFeedLoader.Error.invalidData)) {
             client.complete(withStatusCode: 200, data: invalidJSONData())
         }
     }
@@ -297,7 +211,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
             switch (receivedResult, expectedResult) {
             case let (.success(receivedFeed), .success(expectedFeed)):
                 XCTAssertEqual(receivedFeed, expectedFeed, file: file, line: line)
-            case let (.failure(receivedError as RemoteFeedLoaderError), .failure( expectedError as RemoteFeedLoaderError)):
+            case let (.failure(receivedError as RemoteFeedLoader.Error), .failure( expectedError as RemoteFeedLoader.Error)):
                 XCTAssertEqual(receivedError, expectedError, file: file, line: line)
             default:
                 XCTFail("Expected result: \(expectedResult) but received: \(receivedResult)", file: file, line: line)
