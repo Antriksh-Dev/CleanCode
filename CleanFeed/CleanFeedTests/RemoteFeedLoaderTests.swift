@@ -291,18 +291,24 @@ final class RemoteFeedLoaderTests: XCTestCase {
                 file: StaticString = #file,
                 line: UInt = #line) {
         
-        var receivedResult: LoadFeedResult? = nil
-        sut.load { receivedResult = $0 }
+        let expectation = expectation(description: "wait for load completion")
+        
+        sut.load { receivedResult in
+            switch (receivedResult, expectedResult) {
+            case let (.success(receivedFeed), .success(expectedFeed)):
+                XCTAssertEqual(receivedFeed, expectedFeed, file: file, line: line)
+            case let (.failure(receivedError as RemoteFeedLoaderError), .failure( expectedError as RemoteFeedLoaderError)):
+                XCTAssertEqual(receivedError, expectedError, file: file, line: line)
+            default:
+                XCTFail("Expected result: \(expectedResult) but received: \(receivedResult)", file: file, line: line)
+            }
+            
+            expectation.fulfill()
+        }
+        
         action()
         
-        switch (expectedResult, receivedResult) {
-        case let (.success(expectedFeed), .success(receivedFeed)):
-            XCTAssertEqual(expectedFeed, receivedFeed, file: file, line: line)
-        case let (.failure(expectedError as RemoteFeedLoaderError), .failure(receivedError as RemoteFeedLoaderError)):
-            XCTAssertEqual(expectedError, receivedError, file: file, line: line)
-        default:
-            XCTFail("Expected result: \(expectedResult) but received: \(String(describing: receivedResult))", file: file, line: line)
-        }
+        wait(for: [expectation], timeout: 1.0)
     }
     
     private class HTTPClientSpy: HTTPClient {
