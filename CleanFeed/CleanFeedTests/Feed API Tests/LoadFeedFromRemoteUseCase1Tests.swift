@@ -94,6 +94,19 @@ fileprivate class RemoteFeedRoot: Codable {
     }
 }
 
+fileprivate class RemoteFeedMapper {
+    static var OK_200: Int { 200 }
+    
+    static func map(data: Data, response: HTTPURLResponse) -> LoadFeedResult {
+        guard response.statusCode == OK_200,
+              let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
+            return .failure(RemoteFeedLoader.Error.invalidData)
+        }
+        
+        return .success(remoteFeedRoot.feed)
+    }
+}
+
 final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
 
     override func setUpWithError() throws {
