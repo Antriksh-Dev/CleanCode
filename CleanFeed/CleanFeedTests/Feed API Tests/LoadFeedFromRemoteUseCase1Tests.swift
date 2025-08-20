@@ -51,6 +51,11 @@ fileprivate protocol FeedLoader {
     func load(completion: @escaping (LoadFeedResult) -> Void)
 }
 
+fileprivate enum HTTPClientResult {
+    case success(Data, HTTPURLResponse)
+    case failure(Error)
+}
+
 final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
 
     override func setUpWithError() throws {
