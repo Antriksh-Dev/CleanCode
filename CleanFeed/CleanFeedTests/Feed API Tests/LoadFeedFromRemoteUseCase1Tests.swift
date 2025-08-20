@@ -200,6 +200,19 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
         }
     }
     
+    func test_load_deliversNoResultAfterSUTHasBeenDeallocated() {
+        let url = URL(string: "https://a-given-url.com")!
+        let client = HTTPClientSpy()
+        var sut: RemoteFeedLoader? = RemoteFeedLoader(url: url, client: client)
+        var receivedResult: LoadFeedResult?
+        
+        sut?.load { receivedResult = $0 }
+        sut = nil
+        client.complete(withError: anyError())
+        
+        XCTAssertNil(receivedResult)
+    }
+    
     // MARK: - Helpers
     
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!,
@@ -289,7 +302,7 @@ final class LoadFeedFromRemoteUseCase1Tests: XCTestCase {
                         for action: () -> Void,
                         file: StaticString = #file,
                         line: UInt = #line) {
-        let expectation = expectation(description: "wait load to complete")
+        let expectation = expectation(description: "wait for load completion")
         sut.load { receivedResult in
             switch (receivedResult, expectedResult) {
             case let (.success(receivedFeed), .success(expectedFeed)):
