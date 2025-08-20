@@ -152,7 +152,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let samples = [199, 201, 300, 400, 500].enumerated()
         for (index, code) in samples {
             expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.invalidData)) {
-                client.completeWith(statusCode: code, data: validEmptyJSONData(), at: index)
+                client.complete(withStatusCode: code, data: validEmptyJSONData(), at: index)
             }
         }
     }
@@ -162,7 +162,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let (client, sut) = makeSUT(with: url)
         
         expect(sut: sut, completeWith: .failure(RemoteFeedLoaderError.invalidData)) {
-            client.completeWith(statusCode: 200, data: invalidJSONData())
+            client.complete(withStatusCode: 200, data: invalidJSONData())
         }
     }
     
@@ -170,7 +170,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .success([])) {
-            client.completeWith(statusCode: 200, data: validEmptyJSONData())
+            client.complete(withStatusCode: 200, data: validEmptyJSONData())
         }
     }
     
@@ -178,7 +178,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let (client, sut) = makeSUT()
         
         expect(sut: sut, completeWith: .success(validNonEmptyFeed().models)) {
-            client.completeWith(statusCode: 200, data: validNonEmptyFeed().jsonData)
+            client.complete(withStatusCode: 200, data: validNonEmptyFeed().jsonData)
         }
     }
     
@@ -300,9 +300,9 @@ final class RemoteFeedLoaderTests: XCTestCase {
             completions[index](.failure(error))
         }
         
-        func completeWith(statusCode: Int, data: Data, at index: Int = 0) {
+        func complete(withStatusCode code: Int, data: Data, at index: Int = 0) {
             let response = HTTPURLResponse(url: requestedURLs[index],
-                                           statusCode: statusCode,
+                                           statusCode: code,
                                            httpVersion: nil,
                                            headerFields: nil)!
             completions[index](.success(data, response))
