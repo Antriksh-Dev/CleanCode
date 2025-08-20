@@ -83,6 +83,19 @@ struct RemoteFeedRoot: Codable {
     }
 }
 
+class RemoteFeedMapper {
+    static let OK_200 = 200
+    
+    static func map(data: Data, response: HTTPURLResponse) -> LoadFeedResult {
+        guard response.statusCode == 200,
+              let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
+            return .failure(RemoteFeedLoaderError.invalidData)
+        }
+        
+        return .success(remoteFeedRoot.feed())
+    }
+}
+
 class RemoteFeedLoader: FeedLoader {
     let url: URL
     let client: HTTPClient
@@ -98,12 +111,7 @@ class RemoteFeedLoader: FeedLoader {
             
             switch result {
             case let .success(data, response):
-                guard response.statusCode == 200,
-                      let remoteFeed = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
-                    completion(.failure(RemoteFeedLoaderError.invalidData))
-                    return
-                }
-                completion(.success(remoteFeed.feed()))
+                completion(RemoteFeedMapper.map(data: data, response: response))
             case .failure(_):
                 completion(.failure(RemoteFeedLoaderError.connectivity))
             }
