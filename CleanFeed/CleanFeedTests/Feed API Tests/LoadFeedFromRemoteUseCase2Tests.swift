@@ -55,8 +55,30 @@ fileprivate enum HTTPClientResult {
     case failure(Error)
 }
 
+fileprivate class HTTPClient {
+    enum ReceivedMessage {
+        case get(URL)
+    }
+    
+    var receivedMessages = [ReceivedMessage]()
+    
+}
+
+fileprivate class RemoteFeedLoader {
+    let client: HTTPClient
+    
+    init(client: HTTPClient) {
+        self.client = client
+    }
+}
+
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
-
+    func test_init_doesNotRequestDataFromURL() {
+        let client = HTTPClient()
+        _ = RemoteFeedLoader(client: client)
+        
+        XCTAssertTrue(client.receivedMessages.isEmpty)
+    }
 
 }
