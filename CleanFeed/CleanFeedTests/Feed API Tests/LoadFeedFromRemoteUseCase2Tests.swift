@@ -41,6 +41,10 @@ fileprivate struct Feed {
     }
 }
 
+fileprivate enum LoadFeedResult {
+    case success([Feed])
+    case failure(Error)
+}
 
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
