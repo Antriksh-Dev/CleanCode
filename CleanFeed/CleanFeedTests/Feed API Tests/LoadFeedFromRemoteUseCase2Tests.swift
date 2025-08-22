@@ -56,29 +56,50 @@ fileprivate enum HTTPClientResult {
 }
 
 fileprivate class HTTPClient {
-    enum ReceivedMessage {
+    enum ReceivedMessage: Equatable {
         case get(URL)
     }
     
     var receivedMessages = [ReceivedMessage]()
     
+    func get(from url: URL) {
+        receivedMessages.append(.get(url))
+    }
 }
 
 fileprivate class RemoteFeedLoader {
-    let client: HTTPClient
+    private let url: URL
+    private let client: HTTPClient
     
-    init(client: HTTPClient) {
+    init(url: URL,
+         client: HTTPClient) {
+        self.url = url
         self.client = client
+    }
+    
+    func load() {
+        client.get(from: url)
     }
 }
 
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
     func test_init_doesNotRequestDataFromURL() {
+        let url = URL(string: "https://a-given-url.com")!
         let client = HTTPClient()
-        _ = RemoteFeedLoader(client: client)
+        _ = RemoteFeedLoader(url: url, client: client)
         
         XCTAssertTrue(client.receivedMessages.isEmpty)
+    }
+    
+    func test_load_requestsDataFromURL() {
+        let url = URL(string: "https://a-given-url.com")!
+        let client = HTTPClient()
+        let sut = RemoteFeedLoader(url: url, client: client)
+        
+        sut.load()
+        
+        XCTAssertEqual(client.receivedMessages, [.get(url)])
     }
 
 }
