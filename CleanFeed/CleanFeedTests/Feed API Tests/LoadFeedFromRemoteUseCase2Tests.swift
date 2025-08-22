@@ -85,21 +85,26 @@ fileprivate class RemoteFeedLoader {
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
     func test_init_doesNotRequestDataFromURL() {
-        let url = URL(string: "https://a-given-url.com")!
-        let client = HTTPClient()
-        _ = RemoteFeedLoader(url: url, client: client)
+        let (_, client) = makeSUT()
         
         XCTAssertTrue(client.receivedMessages.isEmpty)
     }
     
     func test_load_requestsDataFromURL() {
         let url = URL(string: "https://a-given-url.com")!
-        let client = HTTPClient()
-        let sut = RemoteFeedLoader(url: url, client: client)
+        let (sut, client) = makeSUT(url: url)
         
         sut.load()
         
         XCTAssertEqual(client.receivedMessages, [.get(url)])
     }
 
+    // MARK: - Helpers
+    
+    private func makeSUT(url: URL = URL(string: "https://a-url.com")!, file: StaticString = #file, line: UInt = #line) -> (sut: RemoteFeedLoader, client: HTTPClient) {
+        let client = HTTPClient()
+        let sut = RemoteFeedLoader(url: url, client: client)
+        
+        return (sut, client)
+    }
 }
