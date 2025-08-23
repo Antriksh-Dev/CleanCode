@@ -55,75 +55,11 @@ fileprivate enum HTTPClientResult {
     case failure(Error)
 }
 
-fileprivate class HTTPClient {
-    enum ReceivedMessage: Equatable {
-        case get(URL)
-    }
-    
-    var receivedMessages = [ReceivedMessage]()
-    
-    func get(from url: URL) {
-        receivedMessages.append(.get(url))
-    }
-}
-
-fileprivate class RemoteFeedLoader {
-    private let url: URL
-    private let client: HTTPClient
-    
-    init(url: URL,
-         client: HTTPClient) {
-        self.url = url
-        self.client = client
-    }
-    
-    func load() {
-        client.get(from: url)
-    }
+fileprivate protocol HTTPClient {
+    func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
 }
 
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
-    func test_init_doesNotRequestDataFromURL() {
-        let (_, client) = makeSUT()
-        
-        XCTAssertTrue(client.receivedMessages.isEmpty)
-    }
     
-    func test_load_requestsDataFromURL() {
-        let url = URL(string: "https://a-given-url.com")!
-        let (sut, client) = makeSUT(url: url)
-        
-        sut.load()
-        
-        XCTAssertEqual(client.receivedMessages, [.get(url)])
-    }
-
-    func test_loadTwice_requestDataFromURLTwice() {
-        let url = URL(string: "https://a-given-url.com")!
-        let (sut, client) = makeSUT(url: url)
-        
-        sut.load()
-        sut.load()
-        
-        XCTAssertEqual(client.receivedMessages, [.get(url), .get(url)])
-    }
-    
-    // MARK: - Helpers
-    
-    private func makeSUT(url: URL = URL(string: "https://a-url.com")!, file: StaticString = #file, line: UInt = #line) -> (sut: RemoteFeedLoader, client: HTTPClient) {
-        let client = HTTPClient()
-        let sut = RemoteFeedLoader(url: url, client: client)
-        
-        trackForMemoryLeak(instance: client)
-        trackForMemoryLeak(instance: sut)
-        
-        return (sut, client)
-    }
-    
-    private func trackForMemoryLeak(instance: AnyObject) {
-        addTeardownBlock { [weak instance] in
-            XCTAssertNil(instance, "Instance should have been deallocated. Potential memory leak.")
-        }
-    }
 }
