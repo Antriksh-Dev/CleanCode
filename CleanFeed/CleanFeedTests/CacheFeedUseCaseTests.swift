@@ -22,7 +22,7 @@
  Deletion error - error course (sad path):
  1. System delivers error.
  
- Saving error - error course (sad path):
+ Insertion error - error course (sad path):
  1. System delivers error.
  
  */
@@ -34,8 +34,14 @@ fileprivate enum DeleteCacheResult {
     case failure(Error)
 }
 
+fileprivate enum InsertFeedResult {
+    case success
+    case failure(Error)
+}
+
 fileprivate protocol FeedStore {
     func deleteCache(completion: @escaping (DeleteCacheResult) -> Void)
+    func insert(completion: @escaping (InsertFeedResult) -> Void)
 }
 
 fileprivate enum SaveFeedResult {
@@ -51,10 +57,19 @@ fileprivate class LocalFeedLoader {
     }
     
     func save(completion: @escaping (SaveFeedResult) -> Void) {
-        store.deleteCache { result in
+        store.deleteCache { [weak self] result in
+            guard let strongSelf = self else { return }
             switch result {
             case .success:
-               break
+                strongSelf.store.insert { [weak self] result in
+                    guard let _ = self else { return }
+                    switch result {
+                    case .success:
+                        completion(.success)
+                    case let .failure(insertionError):
+                        completion(.failure(insertionError))
+                    }
+                }
             case let .failure(deletionError):
                 completion(.failure(deletionError))
             }
@@ -91,6 +106,14 @@ final class CacheFeedUseCaseTests: XCTestCase {
         let (sut, store) = makeSUT()
         expect(sut, toCompleteWith: .failure(deleteCacheError())) {
             store.deleteCompletes(with: deleteCacheError())
+        }
+    }
+    
+    func test_save_deliversErrorOnFeedInsertionError() {
+        let (sut, store) = makeSUT()
+        expect(sut, toCompleteWith: .failure(insertFeedError())) {
+            store.deleteCompletesSuccessfully()
+            store.insertComplete(with: insertFeedError())
         }
     }
 
@@ -138,21 +161,40 @@ final class CacheFeedUseCaseTests: XCTestCase {
         NSError(domain: "Delete cache error", code: 0)
     }
     
+    private func insertFeedError() -> Error {
+        NSError(domain: "Insert feed errr", code: 0)
+    }
+    
     private class FeedStoreSpy: FeedStore {
         enum ReceivedMessage {
             case deleteCache
+            case insertFeed
         }
         
         var receivedMessages = [ReceivedMessage]()
         var deleteCompletions = [(DeleteCacheResult) -> Void]()
+        var insertCompletions = [(InsertFeedResult) -> Void]()
         
         func deleteCache(completion: @escaping (DeleteCacheResult) -> Void) {
             receivedMessages.append(.deleteCache)
             deleteCompletions.append(completion)
         }
         
+        func insert(completion: @escaping (InsertFeedResult) -> Void) {
+            receivedMessages.append(.insertFeed)
+            insertCompletions.append(completion)
+        }
+        
         func deleteCompletes(with error: Error, at index: Int = 0) {
             deleteCompletions[index](.failure(error))
+        }
+        
+        func deleteCompletesSuccessfully(at index: Int = 0) {
+            deleteCompletions[index](.success)
+        }
+        
+        func insertComplete(with error: Error, at index: Int = 0) {
+            insertCompletions[index](.failure(error))
         }
     }
 }
