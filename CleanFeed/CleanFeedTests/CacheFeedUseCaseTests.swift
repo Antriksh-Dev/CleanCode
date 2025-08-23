@@ -65,15 +65,13 @@ fileprivate class LocalFeedLoader {
 final class CacheFeedUseCaseTests: XCTestCase {
 
     func test_init_doesNotRequestStoreOnCreation() {
-        let store = FeedStoreSpy()
-        _ = LocalFeedLoader(store: store)
+        let (_, store) = makeSUT()
         
         XCTAssertTrue(store.receivedMessages.isEmpty)
     }
     
     func test_save_deletesCachedFeed() {
-        let store = FeedStoreSpy()
-        let sut = LocalFeedLoader(store: store)
+        let (sut, store) = makeSUT()
         
         sut.save { _ in }
         
@@ -81,8 +79,7 @@ final class CacheFeedUseCaseTests: XCTestCase {
     }
     
     func test_save_doesNotInsertFeedOnDeletionError() {
-        let store = FeedStoreSpy()
-        let sut = LocalFeedLoader(store: store)
+        let (sut, store) = makeSUT()
         
         sut.save { _ in }
         store.deleteCompletes(with: deleteCacheError())
@@ -91,14 +88,20 @@ final class CacheFeedUseCaseTests: XCTestCase {
     }
     
     func test_save_deliversErrorOnCacheDeletionError() {
-        let store = FeedStoreSpy()
-        let sut = LocalFeedLoader(store: store)
+        let (sut, store) = makeSUT()
         expect(sut, toCompleteWith: .failure(deleteCacheError())) {
             store.deleteCompletes(with: deleteCacheError())
         }
     }
 
     // MARK: - Helpers
+    private func makeSUT(file: StaticString = #file, line: UInt = #line) -> (sut: LocalFeedLoader, store: FeedStoreSpy) {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        
+        return (sut, store)
+    }
+    
     private func expect(_ sut: LocalFeedLoader,
                         toCompleteWith expectedResult: SaveFeedResult,
                         when action: () -> Void,
