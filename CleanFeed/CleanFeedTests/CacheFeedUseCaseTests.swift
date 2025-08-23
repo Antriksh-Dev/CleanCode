@@ -80,6 +80,16 @@ final class CacheFeedUseCaseTests: XCTestCase {
         XCTAssertEqual(store.receivedMessages, [.deleteCache])
     }
     
+    func test_save_doesNotInsertFeedOnDeletionError() {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        
+        sut.save { _ in }
+        store.deleteCompletes(with: deleteCacheError())
+        
+        XCTAssertEqual(store.receivedMessages, [.deleteCache])
+    }
+    
     func test_save_deliversErrorOnCacheDeletionError() {
         let store = FeedStoreSpy()
         let sut = LocalFeedLoader(store: store)
