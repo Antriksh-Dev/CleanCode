@@ -154,7 +154,7 @@ final class CacheFeedUseCaseTests: XCTestCase {
         }
     }
     
-    func test_save_deliversNoResultAfterSUTHasBeenDeallocatedBeforeSuccessfulDeletion() {
+    func test_save_deliversNoResultAfterSUTHasBeenDeallocatedBeforeDeletionCompletion() {
         let store = FeedStoreSpy()
         var sut: LocalFeedLoader? = LocalFeedLoader(store: store)
         let feed = [uniqueFeed(), uniqueFeed()]
@@ -164,6 +164,21 @@ final class CacheFeedUseCaseTests: XCTestCase {
         sut?.save(feed: feed, timeStamp: timeStamp) { receivedResult = $0 }
         sut = nil
         store.deleteCompletesSuccessfully()
+        
+        XCTAssertNil(receivedResult)
+    }
+    
+    func test_save_deliversNoResultAfterSUTHasBeenDeallocatedAfterSuccessfulDeletionAndBeforeInsertionCompletion() {
+        let store = FeedStoreSpy()
+        var sut: LocalFeedLoader? = LocalFeedLoader(store: store)
+        let feed = [uniqueFeed(), uniqueFeed()]
+        let timeStamp = currentDate()
+        var receivedResult: SaveFeedResult?
+        
+        sut?.save(feed: feed, timeStamp: timeStamp) { receivedResult = $0 }
+        store.deleteCompletesSuccessfully()
+        sut = nil
+        store.insertCompletesSuccessfully()
         
         XCTAssertNil(receivedResult)
     }
