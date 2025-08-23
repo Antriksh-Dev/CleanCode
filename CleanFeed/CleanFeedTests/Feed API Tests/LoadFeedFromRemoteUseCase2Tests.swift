@@ -134,7 +134,12 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         }
     }
     
-    func test_load_deliversErrorFor200HTTPResponseAndInvalidJS
+    func test_load_deliversErrorFor200HTTPResponseAndInvalidJSONData() {
+        let (sut, client) = makeSUT()
+        expect(sut, toCompleteWith: .failure(.invalidData)) {
+            client.complete(withData: invalidJSONData(), responseStatusCode: 200)
+        }
+    }
     
     // MARK: - Helpers
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!,
@@ -180,6 +185,10 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
     
     func anyError() -> Error {
         NSError(domain: "Any error", code: 0)
+    }
+    
+    func invalidJSONData() -> Data {
+        "invalid json".data(using: .utf8)!
     }
     
     func validEmptyJSONData() -> Data {
