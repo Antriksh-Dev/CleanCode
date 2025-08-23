@@ -43,7 +43,7 @@ fileprivate class LocalFeedLoader {
     }
     
     func load(completion: @escaping (LocalFeedLoaderResult) -> Void) {
-        
+        store.retrieve { _ in }
     }
 }
 
@@ -56,6 +56,15 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
         XCTAssertEqual(store.receivedMessages, [])
     }
     
+    func test_load_requestsFeedRetrieval() {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        
+        sut.load { _ in }
+        
+        XCTAssertEqual(store.receivedMessages, [.retrieve])
+    }
+    
     // MARK: - Helpers
     
     private class FeedStoreSpy: FeedStore {
@@ -66,7 +75,7 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
         var receivedMessages = [ReceivedMessage]()
         
         func retrieve(completion: @escaping (RetrieveCacheResult) -> Void) {
-            
+            receivedMessages.append(.retrieve)
         }
     }
 }
