@@ -75,17 +75,21 @@ fileprivate class LocalFeedLoader {
             guard let strongSelf = self else { return }
             switch result {
             case .success:
-                strongSelf.store.insert(feed: feed.toLocalFeed(), timeStamp: timeStamp) { [weak self] result in
-                    guard let _ = self else { return }
-                    switch result {
-                    case .success:
-                        completion(.success)
-                    case let .failure(insertionError):
-                        completion(.failure(insertionError))
-                    }
-                }
+                strongSelf.insert(feed: feed, timeStamp: timeStamp, completion: completion)
             case let .failure(deletionError):
                 completion(.failure(deletionError))
+            }
+        }
+    }
+    
+    func insert(feed: [Feed], timeStamp: Date, completion: @escaping (SaveFeedResult) -> Void) {
+        store.insert(feed: feed.toLocalFeed(), timeStamp: timeStamp) { [weak self] result in
+            guard let _ = self else { return }
+            switch result {
+            case .success:
+                completion(.success)
+            case let .failure(insertionError):
+                completion(.failure(insertionError))
             }
         }
     }
