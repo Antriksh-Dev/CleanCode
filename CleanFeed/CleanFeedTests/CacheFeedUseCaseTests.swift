@@ -51,7 +51,14 @@ fileprivate class LocalFeedLoader {
     }
     
     func save(completion: @escaping (SaveFeedResult) -> Void) {
-        store.deleteCache { _ in }
+        store.deleteCache { result in
+            switch result {
+            case .success:
+               break
+            case let .failure(deletionError):
+                completion(.failure(deletionError))
+            }
+        }
     }
 }
 
@@ -73,7 +80,41 @@ final class CacheFeedUseCaseTests: XCTestCase {
         XCTAssertEqual(store.receivedMessages, [.deleteCache])
     }
     
+    func test_save_deliversErrorOnCacheDeletionError() {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        expect(sut, toCompleteWith: .failure(deleteCacheError())) {
+            store.deleteCompletes(with: deleteCacheError())
+        }
+    }
+
     // MARK: - Helpers
+    private func expect(_ sut: LocalFeedLoader,
+                        toCompleteWith expectedResult: SaveFeedResult,
+                        when action: () -> Void,
+                        file: StaticString = #file,
+                        line: UInt = #line) {
+        let expectation = expectation(description: "wait for save completion")
+        sut.save { receivedResult in
+            switch (receivedResult, expectedResult) {
+            case (.success, .success):
+                break
+            case let (.failure(receivedError as NSError), .failure(expectedError as NSError)):
+                XCTAssertEqual(receivedError, expectedError, file: file, line: line)
+            default:
+                XCTFail("Expected result \(expectedResult) but received \(receivedResult)", file: file, line: line)
+            }
+            
+            expectation.fulfill()
+        }
+        
+        action()
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    private func deleteCacheError() -> Error {
+        NSError(domain: "Delete cache error", code: 0)
+    }
     
     private class FeedStoreSpy: FeedStore {
         enum ReceivedMessage {
@@ -81,9 +122,15 @@ final class CacheFeedUseCaseTests: XCTestCase {
         }
         
         var receivedMessages = [ReceivedMessage]()
+        var deleteCompletions = [(DeleteCacheResult) -> Void]()
         
         func deleteCache(completion: @escaping (DeleteCacheResult) -> Void) {
             receivedMessages.append(.deleteCache)
+            deleteCompletions.append(completion)
+        }
+        
+        func deleteCompletes(with error: Error, at index: Int = 0) {
+            deleteCompletions[index](.failure(error))
         }
     }
 }
