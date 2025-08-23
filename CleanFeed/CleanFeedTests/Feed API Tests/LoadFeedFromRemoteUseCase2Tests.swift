@@ -59,7 +59,7 @@ fileprivate protocol HTTPClient {
     func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
 }
 
-fileprivate enum RemoteFeedLoaderError: Equatable {
+fileprivate enum RemoteFeedLoaderError: Error, Equatable {
     case connectivity
     case invalidData
 }
@@ -69,7 +69,7 @@ fileprivate enum RemoteFeedLoaderResult: Equatable {
     case failure(RemoteFeedLoaderError)
 }
 
-fileprivate class RemoteFeedLoader {
+fileprivate class RemoteFeedLoader: FeedLoader {
     private let url: URL
     private let client: HTTPClient
     
@@ -78,14 +78,14 @@ fileprivate class RemoteFeedLoader {
         self.client = client
     }
     
-    func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
+    func load(completion: @escaping (LoadFeedResult) -> Void) {
         client.get(from: url) { [weak self] result in
             guard self != nil else { return }
             switch result {
             case let .success(data, response):
                 completion(RemoteFeedMapper.map(data: data, response: response))
             case .failure:
-                completion(.failure(.connectivity))
+                completion(.failure(RemoteFeedLoaderError.connectivity))
             }
         }
     }
@@ -110,10 +110,10 @@ fileprivate struct RemoteFeedRoot: Codable {
 }
 
 fileprivate class RemoteFeedMapper {
-    static func map (data: Data, response: HTTPURLResponse) -> RemoteFeedLoaderResult {
+    static func map (data: Data, response: HTTPURLResponse) -> LoadFeedResult {
         guard response.statusCode == 200,
               let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
-            return .failure(.invalidData)
+            return .failure(RemoteFeedLoaderError.invalidData)
         }
         
         return .success(remoteFeedRoot.items.feedModels())
@@ -189,7 +189,7 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         let url = URL(string: "https://a-given-url.com")!
         let client = HTTPClientSpy()
         var sut: RemoteFeedLoader? = RemoteFeedLoader(url: url, client: client)
-        var receivedResult: RemoteFeedLoaderResult? = nil
+        var receivedResult: LoadFeedResult? = nil
         
         sut?.load { receivedResult = $0 }
         sut = nil
@@ -229,7 +229,7 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
             switch (receivedResult, expectedResult) {
             case let (.success(receivedFeed), .success(expectedFeed)):
                 XCTAssertEqual(receivedFeed, expectedFeed, file: file, line: line)
-            case let (.failure(receivedError), .failure(expectedError)):
+            case let (.failure(receivedError as NSError), .failure(expectedError as NSError)):
                 XCTAssertEqual(receivedError, expectedError, file: file, line: line)
             default:
                 XCTFail("Expected result \(expectedResult) but received \(receivedResult)", file: file, line: line)
