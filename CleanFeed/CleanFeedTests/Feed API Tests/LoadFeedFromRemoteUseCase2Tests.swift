@@ -79,7 +79,8 @@ fileprivate class RemoteFeedLoader {
     }
     
     func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
-        client.get(from: url) { [unowned self] result in
+        client.get(from: url) { [weak self] result in
+            guard self != nil else { return }
             switch result {
             case let .success(data, response):
                 guard response.statusCode == 200,
@@ -176,6 +177,19 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         expect(sut, toCompleteWith: .success(validNonEmptyFeed().models)) {
             client.complete(withData: validNonEmptyFeed().jsonData, responseStatusCode: 200)
         }
+    }
+    
+    func test_load_deliversNoResultWhenSUTHasBeenDeallocated() {
+        let url = URL(string: "https://a-given-url.com")!
+        let client = HTTPClientSpy()
+        var sut: RemoteFeedLoader? = RemoteFeedLoader(url: url, client: client)
+        var receivedResult: RemoteFeedLoaderResult? = nil
+        
+        sut?.load { receivedResult = $0 }
+        sut = nil
+        client.complete(withError: anyError())
+        
+        XCTAssertNil(receivedResult)
     }
     
     // MARK: - Helpers
