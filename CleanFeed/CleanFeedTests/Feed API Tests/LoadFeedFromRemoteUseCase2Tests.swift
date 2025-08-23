@@ -59,6 +59,11 @@ fileprivate protocol HTTPClient {
     func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
 }
 
+fileprivate enum RemoteFeedLoaderError {
+    case connectivity
+    case invalidData
+}
+
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
     
