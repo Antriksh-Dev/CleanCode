@@ -81,13 +81,36 @@ fileprivate class RemoteFeedLoader {
     func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
         client.get(from: url) { [unowned self] result in
             switch result {
-            case .success:
-                completion(.failure(.invalidData))
+            case let .success(data, response):
+                guard response.statusCode == 200,
+                      let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
+                    completion(.failure(.invalidData))
+                    return
+                }
+                completion(.success(remoteFeedRoot.items.feedModels()))
             case .failure:
                 completion(.failure(.connectivity))
             }
         }
     }
+}
+
+fileprivate struct RemoteFeed: Codable {
+    let id: UUID
+    let description: String?
+    let location: String?
+    let imageURL: URL
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case description
+        case location
+        case imageURL = "image"
+    }
+}
+
+fileprivate struct RemoteFeedRoot: Codable {
+    let items: [RemoteFeed]
 }
 
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
@@ -141,6 +164,13 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         }
     }
     
+    func test_load_deliversEmptyFeedFor200HTTPResponseAndValidEmptyJSONData() {
+        let (sut, client) = makeSUT()
+        expect(sut, toCompleteWith: .success([])) {
+            client.complete(withData: validEmptyJSONData(), responseStatusCode: 200)
+        }
+    }
+    
     // MARK: - Helpers
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!,
                          file: StaticString = #file,
@@ -154,9 +184,11 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         return (sut, client)
     }
     
-    private func trackForMemoryLeak(instance: AnyObject) {
+    private func trackForMemoryLeak(instance: AnyObject, file: StaticString = #file, line: UInt = #line) {
         addTeardownBlock { [weak instance] in
-            XCTAssertNil(instance, "Instance should have been deallocated. Potential memory leak.")
+            XCTAssertNil(instance, "Instance should have been deallocated. Potential memory leak.",
+                         file: file,
+                         line: line)
         }
     }
     
@@ -220,5 +252,11 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
                                            headerFields: nil)!
             getCompletions[index](.success(data, response))
         }
+    }
+}
+
+extension Array where Element == RemoteFeed {
+    func feedModels() -> [Feed] {
+        map { Feed(id: $0.id, description: $0.description, location: $0.location, imageURL: $0.imageURL) }
     }
 }
