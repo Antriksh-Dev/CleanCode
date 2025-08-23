@@ -117,6 +117,14 @@ final class CacheFeedUseCaseTests: XCTestCase {
         }
     }
 
+    func test_save_completesSuccessfullyOnSuccessfulInsertion() {
+        let (sut, store) = makeSUT()
+        expect(sut, toCompleteWith: .success) {
+            store.deleteCompletesSuccessfully()
+            store.insertCompletesSuccessfully()
+        }
+    }
+
     // MARK: - Helpers
     private func makeSUT(file: StaticString = #file, line: UInt = #line) -> (sut: LocalFeedLoader, store: FeedStoreSpy) {
         let store = FeedStoreSpy()
@@ -195,6 +203,10 @@ final class CacheFeedUseCaseTests: XCTestCase {
         
         func insertComplete(with error: Error, at index: Int = 0) {
             insertCompletions[index](.failure(error))
+        }
+        
+        func insertCompletesSuccessfully(at index: Int = 0) {
+            insertCompletions[index](.success)
         }
     }
 }
