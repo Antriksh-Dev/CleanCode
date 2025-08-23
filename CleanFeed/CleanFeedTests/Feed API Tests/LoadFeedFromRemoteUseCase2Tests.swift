@@ -126,10 +126,15 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
     
     func test_load_deliversErrorForNon200HTTPResponseAndValidJSONData() {
         let (sut, client) = makeSUT()
-        expect(sut, toCompleteWith: .failure(.invalidData)) {
-            client.complete(withData: validEmptyJSONData(), responseStatusCode: 201)
+        let samples = [199, 201, 300, 400, 500].enumerated()
+        samples.forEach { index, code in
+            expect(sut, toCompleteWith: .failure(.invalidData)) {
+                client.complete(withData: validEmptyJSONData(), responseStatusCode: code, at: index)
+            }
         }
     }
+    
+    func test_load_deliversErrorFor200HTTPResponseAndInvalidJS
     
     // MARK: - Helpers
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!,
