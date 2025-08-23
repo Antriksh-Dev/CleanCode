@@ -64,6 +64,11 @@ fileprivate enum RemoteFeedLoaderError {
     case invalidData
 }
 
+fileprivate enum RemoteFeedLoaderResult {
+    case success([Feed])
+    case failure(RemoteFeedLoaderError)
+}
+
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
     
