@@ -93,17 +93,27 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         XCTAssertTrue(client.receivedMessages.isEmpty)
     }
     
+    func test_load_requestsDataFromURL() {
+        let url = URL(string: "https://a-given-url.com")!
+        let client = HTTPClientSpy()
+        let sut = RemoteFeedLoader(url: url, client: client)
+        
+        sut.load { _ in }
+        
+        XCTAssertEqual(client.receivedMessages, [.get(url)])
+    }
+    
     // MARK: - Helpers
     
     private class HTTPClientSpy: HTTPClient {
-        enum ReceivedMessage {
+        enum ReceivedMessage: Equatable {
             case get(URL)
         }
         
         var receivedMessages = [ReceivedMessage]()
         
         func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void) {
-            
+            receivedMessages.append(.get(url))
         }
     }
 }
