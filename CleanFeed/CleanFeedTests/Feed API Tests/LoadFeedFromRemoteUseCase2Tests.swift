@@ -80,7 +80,12 @@ fileprivate class RemoteFeedLoader {
     
     func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
         client.get(from: url) { [unowned self] result in
-            completion(.failure(.connectivity))
+            switch result {
+            case .success:
+                completion(.failure(.invalidData))
+            case .failure:
+                completion(.failure(.connectivity))
+            }
         }
     }
 }
@@ -116,6 +121,13 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         let (sut, client) = makeSUT()
         expect(sut, toCompleteWith: .failure(.connectivity)) {
             client.complete(withError: anyError())
+        }
+    }
+    
+    func test_load_deliversErrorForNon200HTTPResponseAndValidJSONData() {
+        let (sut, client) = makeSUT()
+        expect(sut, toCompleteWith: .failure(.invalidData)) {
+            client.complete(withData: validEmptyJSONData(), responseStatusCode: 201)
         }
     }
     
@@ -165,6 +177,11 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         NSError(domain: "Any error", code: 0)
     }
     
+    func validEmptyJSONData() -> Data {
+        let jsonString = "{ \"items\" : [] }"
+        return jsonString.data(using: .utf8)!
+    }
+    
     private class HTTPClientSpy: HTTPClient {
         enum ReceivedMessage: Equatable {
             case get(URL)
@@ -180,6 +197,14 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         
         func complete(withError error: Error, at index: Int = 0) {
             getCompletions[index](.failure(error))
+        }
+        
+        func complete(withData data: Data, responseStatusCode code: Int, at index: Int = 0) {
+            let response = HTTPURLResponse(url: URL(string: "https://any-url.com")!,
+                                           statusCode: code,
+                                           httpVersion: nil,
+                                           headerFields: nil)!
+            getCompletions[index](.success(data, response))
         }
     }
 }
