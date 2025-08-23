@@ -38,6 +38,11 @@ fileprivate protocol FeedStore {
     func deleteCache(completion: @escaping (DeleteCacheResult) -> Void)
 }
 
+fileprivate enum SaveFeedResult {
+    case success
+    case failure(Error)
+}
+
 fileprivate class LocalFeedLoader {
     let store: FeedStore
     
