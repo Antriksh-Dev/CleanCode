@@ -27,7 +27,7 @@
 
 import XCTest
 
-fileprivate struct Feed {
+fileprivate struct Feed: Equatable {
     private let id: UUID
     private let description: String?
     private let location: String?
@@ -59,12 +59,12 @@ fileprivate protocol HTTPClient {
     func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
 }
 
-fileprivate enum RemoteFeedLoaderError {
+fileprivate enum RemoteFeedLoaderError: Equatable {
     case connectivity
     case invalidData
 }
 
-fileprivate enum RemoteFeedLoaderResult {
+fileprivate enum RemoteFeedLoaderResult: Equatable {
     case success([Feed])
     case failure(RemoteFeedLoaderError)
 }
@@ -79,7 +79,9 @@ fileprivate class RemoteFeedLoader {
     }
     
     func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
-        client.get(from: url) { _ in }
+        client.get(from: url) { [unowned self] result in
+            completion(.failure(.connectivity))
+        }
     }
 }
 
@@ -110,6 +112,22 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         XCTAssertEqual(client.receivedMessages, [.get(url), .get(url)])
     }
     
+    func test_load_deliversErrorOnClientError() {
+        let (sut, client) = makeSUT()
+        var receivedResult = [RemoteFeedLoaderResult]()
+        
+        let expectation = expectation(description: "Wait for load completion.")
+        sut.load { result in
+            receivedResult.append(result)
+            expectation.fulfill()
+        }
+        
+        client.complete(withError: anyError())
+        wait(for: [expectation], timeout: 1.0)
+        
+        XCTAssertEqual(receivedResult, [.failure(.connectivity)])
+    }
+    
     // MARK: - Helpers
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!,
                          file: StaticString = #file,
@@ -129,15 +147,25 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         }
     }
     
+    func anyError() -> Error {
+        NSError(domain: "Any error", code: 0)
+    }
+    
     private class HTTPClientSpy: HTTPClient {
         enum ReceivedMessage: Equatable {
             case get(URL)
         }
         
         var receivedMessages = [ReceivedMessage]()
+        var getCompletions = [(HTTPClientResult) -> Void]()
         
         func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void) {
             receivedMessages.append(.get(url))
+            getCompletions.append(completion)
+        }
+        
+        func complete(withError error: Error, at index: Int = 0) {
+            getCompletions[index](.failure(error))
         }
     }
 }
