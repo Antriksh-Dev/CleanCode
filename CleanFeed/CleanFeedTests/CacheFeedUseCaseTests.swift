@@ -35,7 +35,7 @@ fileprivate enum DeleteCacheResult {
 }
 
 fileprivate protocol FeedStore {
-    func deleteCache()
+    func deleteCache(completion: @escaping (DeleteCacheResult) -> Void)
 }
 
 fileprivate class LocalFeedLoader {
@@ -46,7 +46,7 @@ fileprivate class LocalFeedLoader {
     }
     
     func save() {
-        store.deleteCache()
+        store.deleteCache { _ in }
     }
 }
 
@@ -77,7 +77,7 @@ final class CacheFeedUseCaseTests: XCTestCase {
         
         var receivedMessages = [ReceivedMessage]()
         
-        func deleteCache() {
+        func deleteCache(completion: @escaping (DeleteCacheResult) -> Void) {
             receivedMessages.append(.deleteCache)
         }
     }
