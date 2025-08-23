@@ -30,7 +30,7 @@
 import XCTest
 
 fileprivate protocol FeedStore {
-    
+    func deleteCache()
 }
 
 fileprivate class LocalFeedLoader {
@@ -38,6 +38,10 @@ fileprivate class LocalFeedLoader {
     
     init(store: FeedStore) {
         self.store = store
+    }
+    
+    func save() {
+        store.deleteCache()
     }
 }
 
@@ -50,6 +54,15 @@ final class CacheFeedUseCaseTests: XCTestCase {
         XCTAssertTrue(store.receivedMessages.isEmpty)
     }
     
+    func test_save_deletesCachedFeed() {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        
+        sut.save()
+        
+        XCTAssertEqual(store.receivedMessages, [.deleteCache])
+    }
+    
     // MARK: - Helpers
     
     private class FeedStoreSpy: FeedStore {
@@ -58,5 +71,9 @@ final class CacheFeedUseCaseTests: XCTestCase {
         }
         
         var receivedMessages = [ReceivedMessage]()
+        
+        func deleteCache() {
+            receivedMessages.append(.deleteCache)
+        }
     }
 }
