@@ -83,12 +83,7 @@ fileprivate class RemoteFeedLoader {
             guard self != nil else { return }
             switch result {
             case let .success(data, response):
-                guard response.statusCode == 200,
-                      let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
-                    completion(.failure(.invalidData))
-                    return
-                }
-                completion(.success(remoteFeedRoot.items.feedModels()))
+                completion(RemoteFeedMapper.map(data: data, response: response))
             case .failure:
                 completion(.failure(.connectivity))
             }
@@ -112,6 +107,17 @@ fileprivate struct RemoteFeed: Codable {
 
 fileprivate struct RemoteFeedRoot: Codable {
     let items: [RemoteFeed]
+}
+
+fileprivate class RemoteFeedMapper {
+    static func map (data: Data, response: HTTPURLResponse) -> RemoteFeedLoaderResult {
+        guard response.statusCode == 200,
+              let remoteFeedRoot = try? JSONDecoder().decode(RemoteFeedRoot.self, from: data) else {
+            return .failure(.invalidData)
+        }
+        
+        return .success(remoteFeedRoot.items.feedModels())
+    }
 }
 
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
