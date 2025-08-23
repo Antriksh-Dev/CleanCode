@@ -114,18 +114,9 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
     
     func test_load_deliversErrorOnClientError() {
         let (sut, client) = makeSUT()
-        var receivedResult = [RemoteFeedLoaderResult]()
-        
-        let expectation = expectation(description: "Wait for load completion.")
-        sut.load { result in
-            receivedResult.append(result)
-            expectation.fulfill()
+        expect(sut, toCompleteWith: .failure(.connectivity)) {
+            client.complete(withError: anyError())
         }
-        
-        client.complete(withError: anyError())
-        wait(for: [expectation], timeout: 1.0)
-        
-        XCTAssertEqual(receivedResult, [.failure(.connectivity)])
     }
     
     // MARK: - Helpers
@@ -145,6 +136,29 @@ final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
         addTeardownBlock { [weak instance] in
             XCTAssertNil(instance, "Instance should have been deallocated. Potential memory leak.")
         }
+    }
+    
+    private func expect(_ sut: RemoteFeedLoader,
+                        toCompleteWith expectedResult: RemoteFeedLoaderResult,
+                        when action: () -> Void,
+                        file: StaticString = #file,
+                        line: UInt = #line) {
+        let expectation = expectation(description: "wait for load completion.")
+        sut.load { receivedResult in
+            switch (receivedResult, expectedResult) {
+            case let (.success(receivedFeed), .success(expectedFeed)):
+                XCTAssertEqual(receivedFeed, expectedFeed, file: file, line: line)
+            case let (.failure(receivedError), .failure(expectedError)):
+                XCTAssertEqual(receivedError, expectedError, file: file, line: line)
+            default:
+                XCTFail("Expected result \(expectedResult) but received \(receivedResult)", file: file, line: line)
+            }
+            
+            expectation.fulfill()
+        }
+        
+        action()
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func anyError() -> Error {
