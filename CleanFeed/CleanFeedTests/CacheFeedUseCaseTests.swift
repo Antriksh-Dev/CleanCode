@@ -29,6 +29,11 @@
 
 import XCTest
 
+fileprivate enum DeleteCacheResult {
+    case success
+    case failure(Error)
+}
+
 fileprivate protocol FeedStore {
     func deleteCache()
 }
