@@ -85,5 +85,25 @@ fileprivate class RemoteFeedLoader {
 
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
+    func test_init_doesNotRequestDataFromURL() {
+        let url = URL(string: "https://a-given-url.com")!
+        let client = HTTPClientSpy()
+        _ = RemoteFeedLoader(url: url, client: client)
+        
+        XCTAssertTrue(client.receivedMessages.isEmpty)
+    }
     
+    // MARK: - Helpers
+    
+    private class HTTPClientSpy: HTTPClient {
+        enum ReceivedMessage {
+            case get(URL)
+        }
+        
+        var receivedMessages = [ReceivedMessage]()
+        
+        func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void) {
+            
+        }
+    }
 }
