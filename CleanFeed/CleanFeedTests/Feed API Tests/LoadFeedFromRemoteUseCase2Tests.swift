@@ -69,6 +69,20 @@ fileprivate enum RemoteFeedLoaderResult {
     case failure(RemoteFeedLoaderError)
 }
 
+fileprivate class RemoteFeedLoader {
+    private let url: URL
+    private let client: HTTPClient
+    
+    init(url: URL, client: HTTPClient) {
+        self.url = url
+        self.client = client
+    }
+    
+    func load(completion: @escaping (RemoteFeedLoaderResult) -> Void) {
+        client.get(from: url) { _ in }
+    }
+}
+
 final class LoadFeedFromRemoteUseCase2Tests: XCTestCase {
 
     
