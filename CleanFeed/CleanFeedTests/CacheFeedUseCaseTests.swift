@@ -50,7 +50,7 @@ fileprivate class LocalFeedLoader {
         self.store = store
     }
     
-    func save() {
+    func save(completion: @escaping (SaveFeedResult) -> Void) {
         store.deleteCache { _ in }
     }
 }
@@ -68,7 +68,7 @@ final class CacheFeedUseCaseTests: XCTestCase {
         let store = FeedStoreSpy()
         let sut = LocalFeedLoader(store: store)
         
-        sut.save()
+        sut.save { _ in }
         
         XCTAssertEqual(store.receivedMessages, [.deleteCache])
     }
