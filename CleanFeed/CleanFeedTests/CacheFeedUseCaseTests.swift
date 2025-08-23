@@ -29,6 +29,34 @@
 
 import XCTest
 
+fileprivate protocol FeedStore {
+    
+}
+
+fileprivate class LocalFeedLoader {
+    let store: FeedStore
+    
+    init(store: FeedStore) {
+        self.store = store
+    }
+}
+
 final class CacheFeedUseCaseTests: XCTestCase {
 
+    func test_init_doesNotRequestStoreOnCreation() {
+        let store = FeedStoreSpy()
+        _ = LocalFeedLoader(store: store)
+        
+        XCTAssertTrue(store.receivedMessages.isEmpty)
+    }
+    
+    // MARK: - Helpers
+    
+    private class FeedStoreSpy: FeedStore {
+        enum ReceivedMessage {
+            case deleteCache
+        }
+        
+        var receivedMessages = [ReceivedMessage]()
+    }
 }
