@@ -68,6 +68,18 @@ fileprivate protocol FeedStore {
     func retrieveCachedFeed(completion: @escaping (RetrieveCacheResult) -> Void)
 }
 
+fileprivate class LocalFeedLoader: FeedLoader {
+    let client: FeedStore
+    
+    init(client: FeedStore) {
+        self.client = client
+    }
+    
+    func load(completion: @escaping (LoadFeedResult) -> Void) {
+        
+    }
+}
+
 final class LocalFeedLoaderTests: XCTestCase {
 
 
