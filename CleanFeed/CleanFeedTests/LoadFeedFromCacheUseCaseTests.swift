@@ -22,7 +22,8 @@ fileprivate struct Feed: Equatable {
 }
 
 fileprivate enum RetrieveCacheResult {
-    case success([LocalFeed])
+    case empty
+    case found([LocalFeed])
     case failure(Error)
 }
 
@@ -46,7 +47,9 @@ fileprivate class LocalFeedLoader {
         store.retrieve { [weak self] result in
             guard let _ = self else { return }
             switch result {
-            case .success:
+            case .empty:
+                completion(.success([]))
+            case .found:
                 break
             case let .failure(error):
                 completion(.failure(error))
@@ -78,6 +81,14 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
         let sut = LocalFeedLoader(store: store)
         expect(sut, toCompleteWith: .failure(retrievalError())) {
             store.retrieveCompletes(with: retrievalError())
+        }
+    }
+    
+    func test_load_deliversNoFeedForEmptyCache() {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        expect(sut, toCompleteWith: .success([])) {
+            store.retrieveCompletesWithEmptyCache()
         }
     }
     
@@ -123,6 +134,10 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
         
         func retrieveCompletes(with error: Error, at index: Int = 0) {
             retrievalCompletions[index](.failure(error))
+        }
+        
+        func retrieveCompletesWithEmptyCache(at index: Int = 0) {
+            retrievalCompletions[index](.empty)
         }
     }
 }
