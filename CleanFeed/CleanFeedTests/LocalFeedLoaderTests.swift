@@ -99,7 +99,11 @@ final class LocalFeedLoaderTests: XCTestCase {
     }
     
     // MARK: - Load Feed From Cache Use Case Tests
-    
+    func test_init_doesNotRequestRetrieveCachedFeedOnCreation() {
+        let (sut, store) = makeSUT()
+        
+        XCTAssertTrue(store.receivedMessages.isEmpty)
+    }
     
     // MARK: - Validate Cache Use Case Tests
     
