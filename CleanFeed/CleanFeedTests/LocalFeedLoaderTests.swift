@@ -69,10 +69,10 @@ fileprivate protocol FeedStore {
 }
 
 fileprivate class LocalFeedLoader: FeedLoader {
-    let client: FeedStore
+    let store: FeedStore
     
-    init(client: FeedStore) {
-        self.client = client
+    init(store: FeedStore) {
+        self.store = store
     }
     
     func load(completion: @escaping (LoadFeedResult) -> Void) {
@@ -92,6 +92,12 @@ final class LocalFeedLoaderTests: XCTestCase {
     
     
     // MARK: - Helpers
+    private func makeSUT(file: StaticString = #file, line: UInt = #line) -> (sut: LocalFeedLoader, store: FeedStoreSpy) {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        
+        return (sut, store)
+    }
     
     private class FeedStoreSpy: FeedStore {
         func deleteCachedFeed(completion: @escaping (DeleteCacheResult) -> Void) {
