@@ -61,15 +61,13 @@ fileprivate class LocalFeedLoader {
 final class LoadFeedFromCacheUseCaseTests: XCTestCase {
 
     func test_init_doesNotRetrieveFeed() {
-        let store = FeedStoreSpy()
-        _ = LocalFeedLoader(store: store)
+        let (_, store) = makeSUT()
         
         XCTAssertEqual(store.receivedMessages, [])
     }
     
     func test_load_requestsFeedRetrieval() {
-        let store = FeedStoreSpy()
-        let sut = LocalFeedLoader(store: store)
+        let (sut, store) = makeSUT()
         
         sut.load { _ in }
         
@@ -77,22 +75,27 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
     }
     
     func test_load_deliversErrorOnRetrievalError() {
-        let store = FeedStoreSpy()
-        let sut = LocalFeedLoader(store: store)
+        let (sut, store) = makeSUT()
         expect(sut, toCompleteWith: .failure(retrievalError())) {
             store.retrieveCompletes(with: retrievalError())
         }
     }
     
     func test_load_deliversNoFeedForEmptyCache() {
-        let store = FeedStoreSpy()
-        let sut = LocalFeedLoader(store: store)
+        let (sut, store) = makeSUT()
         expect(sut, toCompleteWith: .success([])) {
             store.retrieveCompletesWithEmptyCache()
         }
     }
     
     // MARK: - Helpers
+    private func makeSUT() -> (sut: LocalFeedLoader, store: FeedStoreSpy) {
+        let store = FeedStoreSpy()
+        let sut = LocalFeedLoader(store: store)
+        
+        return (sut, store)
+    }
+    
     private func expect(_ sut: LocalFeedLoader,
                         toCompleteWith expectedResult: LocalFeedLoaderResult,
                         action: () -> Void,
