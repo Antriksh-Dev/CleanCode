@@ -92,7 +92,11 @@ fileprivate class LocalFeedLoader: FeedLoader {
 final class LocalFeedLoaderTests: XCTestCase {
 
     // MARK: - Cache Feed Use Case Tests
-    
+    func test_init_doesNotRequestDeleteCachedFeedOnCreation() {
+        let (sut, store) = makeSUT()
+        
+        XCTAssertTrue(store.receivedMessages.isEmpty)
+    }
     
     // MARK: - Load Feed From Cache Use Case Tests
     
@@ -118,6 +122,14 @@ final class LocalFeedLoaderTests: XCTestCase {
     }
     
     private class FeedStoreSpy: FeedStore {
+        enum ReceivedMessage {
+            case deleteCachedFeed
+            case insertFeedCache(feed: [LocalFeed], timeStamp: Date)
+            case retrieveCache
+        }
+        
+        var receivedMessages = [ReceivedMessage]()
+        
         func deleteCachedFeed(completion: @escaping (DeleteCacheResult) -> Void) {
             
         }
