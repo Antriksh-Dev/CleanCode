@@ -26,6 +26,10 @@ fileprivate enum LoadFeedResult {
     case failure(Error)
 }
 
+fileprivate protocol FeedLoader {
+    func load(completion: @escaping (LoadFeedResult) -> Void)
+}
+
 final class LocalFeedLoaderTests: XCTestCase {
 
 
