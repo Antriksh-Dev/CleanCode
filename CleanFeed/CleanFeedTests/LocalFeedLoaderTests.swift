@@ -73,6 +73,11 @@ fileprivate enum SaveFeedResult {
     case failure(Error)
 }
 
+fileprivate enum ValidateCacheResult {
+    case success
+    case failure(Error)
+}
+
 fileprivate class LocalFeedLoader: FeedLoader {
     let store: FeedStore
     
@@ -86,6 +91,10 @@ fileprivate class LocalFeedLoader: FeedLoader {
     
     func save(_ feed: [Feed], timeStamp: Date, completion: @escaping (SaveFeedResult) -> Void) {
         store.deleteCachedFeed { _ in }
+    }
+    
+    func validate(completion: @escaping (ValidateCacheResult) -> Void) {
+        store.retrieveCachedFeed { _ in }
     }
 }
 
@@ -113,7 +122,7 @@ final class LocalFeedLoaderTests: XCTestCase {
         XCTAssertTrue(store.receivedMessages.isEmpty)
     }
     
-    func test_load_requestRetrieveMessage() {
+    func test_load_requestsRetrieveMessage() {
         let (sut, store) = makeSUT()
         
         sut.load { _ in }
@@ -126,6 +135,14 @@ final class LocalFeedLoaderTests: XCTestCase {
         let (_, store) = makeSUT()
         
         XCTAssertTrue(store.receivedMessages.isEmpty)
+    }
+    
+    func test_validate_requestsRetrieveMessage() {
+        let (sut, store) = makeSUT()
+        
+        sut.validate { _ in }
+        
+        XCTAssertEqual(store.receivedMessages, [.retrieveCache])
     }
     
     // MARK: - Helpers
