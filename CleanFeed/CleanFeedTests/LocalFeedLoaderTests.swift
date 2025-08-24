@@ -62,6 +62,12 @@ fileprivate enum RetrieveCacheResult {
     case failure(Error)
 }
 
+fileprivate protocol FeedStore {
+    func deleteCachedFeed(completion: @escaping (DeleteCacheResult) -> Void)
+    func insertFeedCache(_ feed: [LocalFeed], timeStamp: Date, completion: @escaping (InsertCacheResult) -> Void)
+    func retrieveCachedFeed(completion: @escaping (RetrieveCacheResult) -> Void)
+}
+
 final class LocalFeedLoaderTests: XCTestCase {
 
 
