@@ -7,6 +7,7 @@
 
 import XCTest
 
+// Feed Feature
 fileprivate struct Feed {
     private let id: UUID
     private let description: String?
@@ -28,6 +29,12 @@ fileprivate enum LoadFeedResult {
 
 fileprivate protocol FeedLoader {
     func load(completion: @escaping (LoadFeedResult) -> Void)
+}
+
+// Feed Persistence
+fileprivate enum DeleteCacheResult {
+    case success
+    case failure(Error)
 }
 
 final class LocalFeedLoaderTests: XCTestCase {
