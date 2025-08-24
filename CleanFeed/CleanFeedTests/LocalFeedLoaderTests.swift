@@ -96,7 +96,16 @@ final class LocalFeedLoaderTests: XCTestCase {
         let store = FeedStoreSpy()
         let sut = LocalFeedLoader(store: store)
         
+        trackForMemoryLeak(instance: store, file: file, line: line)
+        trackForMemoryLeak(instance: sut, file: file, line: line)
+        
         return (sut, store)
+    }
+    
+    private func trackForMemoryLeak(instance: AnyObject, file: StaticString = #file, line: UInt = #line) {
+        addTeardownBlock { [weak instance] in
+            XCTAssertNil(instance, "Instance should have been deallocated. Potential memory leak.", file: file, line: line)
+        }
     }
     
     private class FeedStoreSpy: FeedStore {
