@@ -81,7 +81,7 @@ fileprivate class LocalFeedLoader: FeedLoader {
     }
     
     func load(completion: @escaping (LoadFeedResult) -> Void) {
-        
+        store.retrieveCachedFeed { _ in }
     }
     
     func save(_ feed: [Feed], timeStamp: Date, completion: @escaping (SaveFeedResult) -> Void) {
@@ -111,6 +111,14 @@ final class LocalFeedLoaderTests: XCTestCase {
         let (_, store) = makeSUT()
         
         XCTAssertTrue(store.receivedMessages.isEmpty)
+    }
+    
+    func test_load_requestRetrieveMessage() {
+        let (sut, store) = makeSUT()
+        
+        sut.load { _ in }
+        
+        XCTAssertEqual(store.receivedMessages, [.retrieveCache])
     }
     
     // MARK: - Validate Cache Use Case Tests
@@ -166,7 +174,7 @@ final class LocalFeedLoaderTests: XCTestCase {
         }
         
         func retrieveCachedFeed(completion: @escaping (RetrieveCacheResult) -> Void) {
-            
+            receivedMessages.append(.retrieveCache)
         }
     }
 }
