@@ -37,6 +37,11 @@ fileprivate enum DeleteCacheResult {
     case failure(Error)
 }
 
+fileprivate enum InsertCacheResult {
+    case success
+    case failute(Error)
+}
+
 final class LocalFeedLoaderTests: XCTestCase {
 
 
