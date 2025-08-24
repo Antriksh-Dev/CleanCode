@@ -32,7 +32,7 @@ fileprivate protocol FeedLoader {
 }
 
 // Feed Persistence
-fileprivate struct LocalFeed {
+fileprivate struct LocalFeed: Equatable {
     private let id: UUID
     private let description: String?
     private let location: String?
@@ -84,8 +84,8 @@ fileprivate class LocalFeedLoader: FeedLoader {
         
     }
     
-    func save(_ feed: [LocalFeed], timeStamp: Date, completion: @escaping (SaveFeedResult) -> Void) {
-        
+    func save(_ feed: [Feed], timeStamp: Date, completion: @escaping (SaveFeedResult) -> Void) {
+        store.deleteCachedFeed { _ in }
     }
 }
 
@@ -96,6 +96,14 @@ final class LocalFeedLoaderTests: XCTestCase {
         let (_, store) = makeSUT()
         
         XCTAssertTrue(store.receivedMessages.isEmpty)
+    }
+    
+    func test_save_requestsDeleteMessage() {
+        let (sut, store) = makeSUT()
+        
+        sut.save(uniqueFeed(), timeStamp: currentDate()) { _ in }
+        
+        XCTAssertEqual(store.receivedMessages, [.deleteCachedFeed])
     }
     
     // MARK: - Load Feed From Cache Use Case Tests
@@ -129,8 +137,19 @@ final class LocalFeedLoaderTests: XCTestCase {
         }
     }
     
+    private func uniqueFeed() -> [Feed] {
+        [
+            Feed(id: UUID(), description: "any description", location: "any location", imageURL: URL(string: "https://any-url.com")!),
+            Feed(id: UUID(), description: "any description", location: "any location", imageURL: URL(string: "https://any-url.com")!)
+        ]
+    }
+    
+    private func currentDate() -> Date {
+        Date()
+    }
+    
     private class FeedStoreSpy: FeedStore {
-        enum ReceivedMessage {
+        enum ReceivedMessage: Equatable {
             case deleteCachedFeed
             case insertFeedCache(feed: [LocalFeed], timeStamp: Date)
             case retrieveCache
@@ -139,7 +158,7 @@ final class LocalFeedLoaderTests: XCTestCase {
         var receivedMessages = [ReceivedMessage]()
         
         func deleteCachedFeed(completion: @escaping (DeleteCacheResult) -> Void) {
-            
+            receivedMessages.append(.deleteCachedFeed)
         }
         
         func insertFeedCache(_ feed: [LocalFeed], timeStamp: Date, completion: @escaping (InsertCacheResult) -> Void) {
