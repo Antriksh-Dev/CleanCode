@@ -93,20 +93,24 @@ final class LocalFeedLoaderTests: XCTestCase {
 
     // MARK: - Cache Feed Use Case Tests
     func test_init_doesNotRequestDeleteCachedFeedOnCreation() {
-        let (sut, store) = makeSUT()
+        let (_, store) = makeSUT()
         
         XCTAssertTrue(store.receivedMessages.isEmpty)
     }
     
     // MARK: - Load Feed From Cache Use Case Tests
     func test_init_doesNotRequestRetrieveCachedFeedOnCreation() {
-        let (sut, store) = makeSUT()
+        let (_, store) = makeSUT()
         
         XCTAssertTrue(store.receivedMessages.isEmpty)
     }
     
     // MARK: - Validate Cache Use Case Tests
-    
+    func test_init_doesNotRequestRetrieveFeedCacheOnCreation() {
+        let (_, store) = makeSUT()
+        
+        XCTAssertTrue(store.receivedMessages.isEmpty)
+    }
     
     // MARK: - Helpers
     private func makeSUT(file: StaticString = #file, line: UInt = #line) -> (sut: LocalFeedLoader, store: FeedStoreSpy) {
