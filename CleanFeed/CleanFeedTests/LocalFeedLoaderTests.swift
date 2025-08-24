@@ -82,5 +82,28 @@ fileprivate class LocalFeedLoader: FeedLoader {
 
 final class LocalFeedLoaderTests: XCTestCase {
 
-
+    // MARK: - Cache Feed Use Case Tests
+    
+    
+    // MARK: - Load Feed From Cache Use Case Tests
+    
+    
+    // MARK: - Validate Cache Use Case Tests
+    
+    
+    // MARK: - Helpers
+    
+    private class FeedStoreSpy: FeedStore {
+        func deleteCachedFeed(completion: @escaping (DeleteCacheResult) -> Void) {
+            
+        }
+        
+        func insertFeedCache(_ feed: [LocalFeed], timeStamp: Date, completion: @escaping (InsertCacheResult) -> Void) {
+            
+        }
+        
+        func retrieveCachedFeed(completion: @escaping (RetrieveCacheResult) -> Void) {
+            
+        }
+    }
 }
