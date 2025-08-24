@@ -32,6 +32,20 @@ fileprivate protocol FeedLoader {
 }
 
 // Feed Persistence
+fileprivate struct LocalFeed {
+    private let id: UUID
+    private let description: String?
+    private let location: String?
+    private let imageURL: URL
+    
+    init(id: UUID, description: String?, location: String?, imageURL: URL) {
+        self.id = id
+        self.description = description
+        self.location = location
+        self.imageURL = imageURL
+    }
+}
+
 fileprivate enum DeleteCacheResult {
     case success
     case failure(Error)
@@ -40,6 +54,12 @@ fileprivate enum DeleteCacheResult {
 fileprivate enum InsertCacheResult {
     case success
     case failute(Error)
+}
+
+fileprivate enum RetrieveCacheResult {
+    case empty
+    case found(feed: [LocalFeed], timeStamp: Date)
+    case failure(Error)
 }
 
 final class LocalFeedLoaderTests: XCTestCase {
