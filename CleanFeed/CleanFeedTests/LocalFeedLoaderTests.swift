@@ -68,6 +68,11 @@ fileprivate protocol FeedStore {
     func retrieveCachedFeed(completion: @escaping (RetrieveCacheResult) -> Void)
 }
 
+fileprivate enum SaveFeedResult {
+    case success
+    case failure(Error)
+}
+
 fileprivate class LocalFeedLoader: FeedLoader {
     let store: FeedStore
     
@@ -76,6 +81,10 @@ fileprivate class LocalFeedLoader: FeedLoader {
     }
     
     func load(completion: @escaping (LoadFeedResult) -> Void) {
+        
+    }
+    
+    func save(_ feed: [LocalFeed], timeStamp: Date, completion: @escaping (SaveFeedResult) -> Void) {
         
     }
 }
