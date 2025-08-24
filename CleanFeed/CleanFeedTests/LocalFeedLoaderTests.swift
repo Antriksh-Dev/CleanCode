@@ -21,6 +21,11 @@ fileprivate struct Feed {
     }
 }
 
+fileprivate enum LoadFeedResult {
+    case success([Feed])
+    case failure(Error)
+}
+
 final class LocalFeedLoaderTests: XCTestCase {
 
 
